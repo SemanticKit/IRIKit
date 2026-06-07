@@ -123,7 +123,9 @@ profile.path
 ```
 
 IRIKit does not treat a scheme as a networking instruction. It only validates
-and stores IRI syntax.
+and stores IRI syntax. For example, a leading `//` selects RFC 3987's authority
+branch, and that branch can contain an empty registered-name host. Whether a
+particular scheme assigns meaning to that spelling is outside generic IRI syntax.
 
 ## Carry Relative References
 
@@ -139,7 +141,9 @@ URL(section).relativeString
 ```
 
 The reference stays relative. Resolution against a base IRI belongs to the
-calling context.
+calling context. RFC 3987 also keeps relative references distinct from absolute
+IRIs: a colon before any `/`, `?`, or `#` is parsed as a scheme only when the
+prefix is a valid scheme name; otherwise it is invalid in the first path segment.
 
 ## Use Static and Sliced Text
 

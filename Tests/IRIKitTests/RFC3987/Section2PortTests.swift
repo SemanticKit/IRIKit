@@ -26,6 +26,7 @@ extension RFC3987ComplianceTests {
                 "https://example.com:8a/",
                 "https://example.com:+80/",
                 "https://example.com:-80/",
+                "https://example.com:\u{0661}/",
             ]
         )
         func rejectsNonDigitPorts(_ iriString: String) {

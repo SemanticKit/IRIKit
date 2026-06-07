@@ -8,7 +8,7 @@ Use these standards as implementation authority:
 
 1. RFC 3987, Internationalized Resource Identifiers (IRIs):
    <https://datatracker.ietf.org/doc/html/rfc3987>
-   Local reference text: `Sources/IRIKit/Documentation/RFC3987.md`
+   Local reference text: `Documentation/RFC3987.md`
 2. RFC 3986, Uniform Resource Identifier (URI): Generic Syntax:
    <https://datatracker.ietf.org/doc/html/rfc3986>
 
@@ -49,20 +49,14 @@ That suite is the executable assertion surface for standards compliance.
 
 ## Improvement Candidates
 
-1. Add component-based construction.
-   A type like `IRIComponents` or `IRIBuilder` would let callers set `scheme`, `authority`, `path`, `queryItems`, and `fragment` without hand-concatenating strings. This matches the URLComponents lesson from [Constructing URLs in Swift](https://www.swiftbysundell.com/articles/constructing-urls-in-swift/).
+1. Add append-style APIs.
+   `iri.appending(pathComponent:)`, `iri.appending(pathComponents:)`, and `iri.appending(queryItems:)` would make dynamic IRI construction feel closer to modern `URL` APIs from [Modern URL construction in Swift](https://www.swiftbysundell.com/articles/modern-url-construction-in-swift/) while still validating the assembled RFC 3987 text.
 
-2. Add append-style APIs.
-   `iri.appending(pathComponent:)`, `iri.appending(pathComponents:)`, and `iri.appending(queryItems:)` would make dynamic IRI construction feel closer to modern `URL` APIs from [Modern URL construction in Swift](https://www.swiftbysundell.com/articles/modern-url-construction-in-swift/).
-
-3. Add an `IRIQueryItem` value type.
+2. Add an `IRIQueryItem` value type.
    This gives query construction a structured API instead of raw strings, while keeping encoding/mapping RFC-backed.
 
-4. Add static construction support.
-   Static construction improves fixed IRI ergonomics through `StaticString` and string-literal entry points. Invalid static literals fail validation when constructed. The Sundell string-literal article is useful here, but archived: [Defining static URLs using string literals](https://www.swiftbysundell.com/tips/defining-static-urls-using-string-literals/).
-
-5. Consider a macro later.
+3. Consider a macro later.
    A `#iri("https://example.com/…")` macro could validate static IRIs at compile time, mirroring the modern static URL macro idea. That should be a later slice because it adds tooling surface.
 
-6. Improve `IRITemplate`.
+4. Improve `IRITemplate`.
    Current templates expand raw string values. A better version would support typed values and explicit expansion policies for path segments vs query values.

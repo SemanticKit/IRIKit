@@ -38,16 +38,29 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
-            "ipath-noscheme first segment cannot contain ':'.",
+            "A colon before any '/', '?', or '#' selects the IRI branch when the prefix is a valid scheme.",
             arguments: [
                 "first:segment/path",
                 "a:b",
             ]
         )
-        func colonInFirstSegmentSelectsIRIReferenceBranch(_ referenceString: String) throws {
+        func colonAfterValidSchemeSelectsIRIBranch(_ referenceString: String) throws {
             let reference = try IRIReference(validating: referenceString)
 
             #expect(reference.rawValue == referenceString)
+        }
+
+        @Test(
+            "ipath-noscheme first segment cannot contain ':' when the prefix is not a valid scheme.",
+            arguments: [
+                "1:first/path",
+                "+:path",
+            ]
+        )
+        func rejectsColonInFirstSegmentWithoutValidScheme(_ referenceString: String) {
+            #expect(throws: IRIError.invalidIRIReference(referenceString)) {
+                try IRIReference(validating: referenceString)
+            }
         }
 
         @Test(
