@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">IRIKit Tutorial Paths</title>
+  <desc id="desc">A diagram showing validation, construction, and Foundation bridging paths.</desc>
+  <rect width="1200" height="675" fill="#f7f8fb"/>
+  <rect x="64" y="72" width="1072" height="531" rx="28" fill="#ffffff" stroke="#d7dce5" stroke-width="2"/>
+  <text x="108" y="150" font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="48" font-weight="700" fill="#142033">IRIKit</text>
+  <text x="108" y="196" font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="22" fill="#526070">Standards-backed IRI values for Swift packages</text>
+  <g font-family="Avenir Next, Helvetica, Arial, sans-serif">
+    <rect x="108" y="278" width="268" height="166" rx="18" fill="#edf7f2" stroke="#99d2b3"/>
+    <text x="136" y="330" font-size="27" font-weight="700" fill="#173b2a">Validate</text>
+    <text x="136" y="372" font-size="20" fill="#2e5944">IRI</text>
+    <text x="136" y="404" font-size="20" fill="#2e5944">AbsoluteIRI</text>
+    <text x="136" y="436" font-size="20" fill="#2e5944">IRIReference</text>
+    <rect x="466" y="278" width="268" height="166" rx="18" fill="#eef4ff" stroke="#9ab9ee"/>
+    <text x="494" y="330" font-size="27" font-weight="700" fill="#17345f">Construct</text>
+    <text x="494" y="372" font-size="20" fill="#365783">IRIComponents</text>
+    <text x="494" y="404" font-size="20" fill="#365783">IRITemplate</text>
+    <text x="494" y="436" font-size="20" fill="#365783">String literals</text>
+    <rect x="824" y="278" width="268" height="166" rx="18" fill="#fff6e8" stroke="#e7bd72"/>
+    <text x="852" y="330" font-size="27" font-weight="700" fill="#604012">Bridge</text>
+    <text x="852" y="372" font-size="20" fill="#765a2d">Foundation URL</text>
+    <text x="852" y="404" font-size="20" fill="#765a2d">URLComponents</text>
+    <text x="852" y="436" font-size="20" fill="#765a2d">URI mapping</text>
+  </g>
+  <path d="M390 361h52" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+  <path d="M748 361h52" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+  <path d="M434 349l16 12-16 12" fill="none" stroke="#7e8794" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M792 349l16 12-16 12" fill="none" stroke="#7e8794" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="108" y="526" font-family="SF Mono, Menlo, monospace" font-size="24" fill="#263344">https://example.com/people/renee</text>
+</svg>

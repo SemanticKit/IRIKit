@@ -1,0 +1,89 @@
+@Tutorial(time: 15) {
+    @Intro(title: "Constructing IRI Values") {
+        Create the IRIKit value that matches an identifier's role, inspect its
+        components, and build identifiers from reusable pieces.
+
+        @Image(source: irikit-constructing-values, alt: "A diagram showing IRI, AbsoluteIRI, IRIReference, IRIComponents, and IRITemplate construction paths.")
+    }
+
+    @Section(title: "Create absolute identifiers") {
+        Start with direct validation when your code receives one complete
+        identifier string.
+
+        @Steps {
+            @Step {
+                Import IRIKit and validate a complete IRI string.
+
+                @Code(name: "Create an IRI", file: constructing-iri-values-01.swift)
+            }
+
+            @Step {
+                Read the validated text and components from the resulting
+                value.
+
+                @Code(name: "Inspect an IRI", file: constructing-iri-values-02.swift)
+            }
+
+            @Step {
+                Use `AbsoluteIRI` when a fragment is not part of the accepted
+                value.
+
+                @Code(name: "Require No Fragment", file: constructing-iri-values-03.swift)
+            }
+        }
+    }
+
+    @Section(title: "Assemble from components") {
+        Use component construction when callers provide separate generic syntax
+        values.
+
+        @Steps {
+            @Step {
+                Create mutable component storage with the scheme, authority,
+                path, query, and fragment values your app owns.
+
+                @Code(name: "Create Components", file: constructing-iri-values-04.swift)
+            }
+
+            @Step {
+                Inspect the assembled string before validation when you need to
+                show or log the candidate value.
+
+                @Code(name: "Inspect Component Text", file: constructing-iri-values-05.swift)
+            }
+
+            @Step {
+                Validate the assembled value when it is ready to become an
+                IRI.
+
+                @Code(name: "Validate Components", file: constructing-iri-values-06.swift)
+            }
+        }
+    }
+
+    @Section(title: "Use references and templates") {
+        Keep context-dependent references and reusable runtime patterns
+        separate from absolute IRI identity.
+
+        @Steps {
+            @Step {
+                Use `IRIReference` for relative links and fragment references.
+
+                @Code(name: "Create References", file: constructing-iri-values-07.swift)
+            }
+
+            @Step {
+                Create a template when part of an absolute IRI is supplied at
+                runtime.
+
+                @Code(name: "Create a Template", file: constructing-iri-values-08.swift)
+            }
+
+            @Step {
+                Expand the template into a validated IRI.
+
+                @Code(name: "Expand a Template", file: constructing-iri-values-09.swift)
+            }
+        }
+    }
+}

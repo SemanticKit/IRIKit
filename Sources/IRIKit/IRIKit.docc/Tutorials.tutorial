@@ -1,0 +1,14 @@
+@Tutorials(name: "IRIKit") {
+    @Intro(title: "IRIKit") {
+        Learn to validate, inspect, construct, and bridge standards-backed
+        Internationalized Resource Identifiers in Swift.
+
+        @Image(source: irikit-tutorials, alt: "A diagram showing IRIKit validation, construction, and Foundation bridging paths.")
+    }
+
+    @Chapter(name: "Getting Started") {
+        @TutorialReference(tutorial: "doc:ConstructingIRIValues")
+        @TutorialReference(tutorial: "doc:ValidatingIRIText")
+        @TutorialReference(tutorial: "doc:BridgingFoundationValues")
+    }
+}

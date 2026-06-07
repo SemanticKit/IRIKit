@@ -1,0 +1,85 @@
+@Tutorial(time: 12) {
+    @Intro(title: "Bridging Foundation Values") {
+        Convert between IRIKit values and Foundation URL types at API
+        boundaries that require URI-compatible text.
+
+        @Image(source: irikit-foundation-bridging, alt: "A diagram showing Unicode IRI text mapped to URI-compatible Foundation URL text and back.")
+    }
+
+    @Section(title: "Create URLs from IRIKit values") {
+        Use IRIKit values inside your package, then bridge to Foundation when
+        another API requires `URL`.
+
+        @Steps {
+            @Step {
+                Import Foundation and IRIKit.
+
+                @Code(name: "Import Foundation and IRIKit", file: bridging-foundation-values-01.swift)
+            }
+
+            @Step {
+                Create a Foundation URL from an IRI. Unicode IRI characters are
+                mapped to URI-compatible percent-encoded text.
+
+                @Code(name: "Create a URL from an IRI", file: bridging-foundation-values-02.swift)
+            }
+
+            @Step {
+                Create a Foundation URL from a relative IRI reference.
+
+                @Code(name: "Create a URL from a Reference", file: bridging-foundation-values-03.swift)
+            }
+        }
+    }
+
+    @Section(title: "Create IRIKit values from Foundation") {
+        Validate Foundation URL text before storing it as IRI identity.
+
+        @Steps {
+            @Step {
+                Create an IRI from a Foundation URL.
+
+                @Code(name: "Create an IRI from a URL", file: bridging-foundation-values-04.swift)
+            }
+
+            @Step {
+                Create an absolute IRI without a fragment from a Foundation
+                URL.
+
+                @Code(name: "Create an Absolute IRI from a URL", file: bridging-foundation-values-05.swift)
+            }
+
+            @Step {
+                Create an IRI reference from the URL's relative string.
+
+                @Code(name: "Create a Reference from a URL", file: bridging-foundation-values-06.swift)
+            }
+        }
+    }
+
+    @Section(title: "Use URL components") {
+        Bridge Foundation component storage when another API already provides
+        `URLComponents`.
+
+        @Steps {
+            @Step {
+                Assemble Foundation URL components.
+
+                @Code(name: "Assemble URL Components", file: bridging-foundation-values-07.swift)
+            }
+
+            @Step {
+                Create an IRI from the assembled Foundation components.
+
+                @Code(name: "Create an IRI from URL Components", file: bridging-foundation-values-08.swift)
+            }
+
+            @Step {
+                Create IRIKit component storage when you need to keep editing
+                component values before validation.
+
+                @Code(name: "Create IRI Components from URL Components", file: bridging-foundation-values-09.swift)
+            }
+        }
+    }
+}

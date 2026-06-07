@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Validating IRI Text</title>
+  <desc id="desc">A diagram showing text validation into IRIKit values or IRIError cases.</desc>
+  <rect width="1200" height="675" fill="#fbfaf7"/>
+  <text x="80" y="122" font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="44" font-weight="700" fill="#142033">Validate text at the boundary</text>
+  <g font-family="Avenir Next, Helvetica, Arial, sans-serif">
+    <rect x="90" y="250" width="276" height="128" rx="16" fill="#ffffff" stroke="#d5c7aa"/>
+    <text x="126" y="300" font-size="26" font-weight="700" fill="#3c3425">Input text</text>
+    <text x="126" y="338" font-size="20" fill="#675b46">String, StaticString, Substring</text>
+    <rect x="462" y="236" width="276" height="156" rx="16" fill="#fff7e8" stroke="#e6bd72"/>
+    <text x="498" y="300" font-size="26" font-weight="700" fill="#604012">Validation</text>
+    <text x="498" y="338" font-size="20" fill="#765a2d">RFC 3987 syntax</text>
+    <rect x="834" y="172" width="276" height="128" rx="16" fill="#edf7f2" stroke="#99d2b3"/>
+    <text x="870" y="222" font-size="26" font-weight="700" fill="#173b2a">Value</text>
+    <text x="870" y="260" font-size="20" fill="#2e5944">IRIKit type</text>
+    <rect x="834" y="374" width="276" height="128" rx="16" fill="#fff0f0" stroke="#e8a1a1"/>
+    <text x="870" y="424" font-size="26" font-weight="700" fill="#6b2020">Error</text>
+    <text x="870" y="462" font-size="20" fill="#814040">IRIError case</text>
+  </g>
+  <path d="M382 314h60" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+  <path d="M754 288l60-34" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+  <path d="M754 340l60 64" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+</svg>

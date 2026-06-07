@@ -1,0 +1,104 @@
+@Tutorial(time: 15) {
+    @Intro(title: "Validating IRI Text") {
+        Validate incoming strings, fixed literals, static strings, and sliced
+        text before using them as IRIKit values.
+
+        @Image(source: irikit-validating-text, alt: "A diagram showing input text validated into IRIKit values or reported as IRIError cases.")
+    }
+
+    @Section(title: "Validate required input") {
+        Use throwing initializers at API boundaries where invalid IRI text
+        should be reported as an error.
+
+        @Steps {
+            @Step {
+                Validate a required absolute IRI.
+
+                @Code(name: "Validate an IRI", file: validating-iri-text-01.swift)
+            }
+
+            @Step {
+                Validate a required reference when relative text is allowed.
+
+                @Code(name: "Validate a Reference", file: validating-iri-text-02.swift)
+            }
+
+            @Step {
+                Validate template syntax before accepting runtime values.
+
+                @Code(name: "Validate a Template", file: validating-iri-text-03.swift)
+            }
+        }
+    }
+
+    @Section(title: "Use optional construction") {
+        Use failable initializers when `nil` is the correct representation for
+        invalid text.
+
+        @Steps {
+            @Step {
+                Create an optional IRI from a lossless string description.
+
+                @Code(name: "Use a Failable String Initializer", file: validating-iri-text-04.swift)
+            }
+
+            @Step {
+                Create an optional IRI from a raw value.
+
+                @Code(name: "Use a Raw Value", file: validating-iri-text-05.swift)
+            }
+
+            @Step {
+                Use the string-labeled initializer when it improves call-site
+                clarity.
+
+                @Code(name: "Use a Labeled String Initializer", file: validating-iri-text-06.swift)
+            }
+        }
+    }
+
+    @Section(title: "Validate fixed and sliced text") {
+        Match the initializer to how text enters your program.
+
+        @Steps {
+            @Step {
+                Use string literals for known valid identifiers.
+
+                @Code(name: "Use String Literals", file: validating-iri-text-07.swift)
+            }
+
+            @Step {
+                Use `StaticString` initializers when fixed text should be
+                validated through a throwing call.
+
+                @Code(name: "Use Static Strings", file: validating-iri-text-08.swift)
+            }
+
+            @Step {
+                Use `Substring` initializers when the validated text is sliced
+                from a larger buffer.
+
+                @Code(name: "Use Substrings", file: validating-iri-text-09.swift)
+            }
+        }
+    }
+
+    @Section(title: "Handle validation errors") {
+        Handle IRIKit's error cases at the same boundary where validation
+        occurs.
+
+        @Steps {
+            @Step {
+                Catch invalid absolute IRI input.
+
+                @Code(name: "Handle Invalid IRI Input", file: validating-iri-text-10.swift)
+            }
+
+            @Step {
+                Catch missing template values during expansion.
+
+                @Code(name: "Handle Missing Template Values", file: validating-iri-text-11.swift)
+            }
+        }
+    }
+}

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Constructing IRIKit Values</title>
+  <desc id="desc">A diagram showing IRIKit construction paths.</desc>
+  <rect width="1200" height="675" fill="#f8fafc"/>
+  <text x="80" y="122" font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="44" font-weight="700" fill="#142033">Construct IRI values</text>
+  <g font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="22">
+    <rect x="80" y="194" width="290" height="110" rx="16" fill="#ffffff" stroke="#c9d3df"/>
+    <text x="112" y="242" font-weight="700" fill="#1f3147">Complete string</text>
+    <text x="112" y="276" fill="#526070">IRI(validating:)</text>
+    <rect x="455" y="194" width="290" height="110" rx="16" fill="#ffffff" stroke="#c9d3df"/>
+    <text x="487" y="242" font-weight="700" fill="#1f3147">No fragment</text>
+    <text x="487" y="276" fill="#526070">AbsoluteIRI</text>
+    <rect x="830" y="194" width="290" height="110" rx="16" fill="#ffffff" stroke="#c9d3df"/>
+    <text x="862" y="242" font-weight="700" fill="#1f3147">Relative text</text>
+    <text x="862" y="276" fill="#526070">IRIReference</text>
+    <rect x="238" y="404" width="290" height="110" rx="16" fill="#eef7ff" stroke="#9ac2e8"/>
+    <text x="270" y="452" font-weight="700" fill="#17345f">Components</text>
+    <text x="270" y="486" fill="#365783">IRIComponents.iri()</text>
+    <rect x="672" y="404" width="290" height="110" rx="16" fill="#eef7ff" stroke="#9ac2e8"/>
+    <text x="704" y="452" font-weight="700" fill="#17345f">Template</text>
+    <text x="704" y="486" fill="#365783">IRITemplate.expand(_:)</text>
+  </g>
+  <path d="M370 249h61" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+  <path d="M745 249h61" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+  <path d="M528 459h120" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+</svg>

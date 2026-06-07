@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Foundation Bridging</title>
+  <desc id="desc">A diagram showing Unicode IRI text mapped to URI-compatible Foundation URL text and back.</desc>
+  <rect width="1200" height="675" fill="#f7f9fc"/>
+  <text x="80" y="122" font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="44" font-weight="700" fill="#142033">Bridge only at Foundation boundaries</text>
+  <g font-family="Avenir Next, Helvetica, Arial, sans-serif">
+    <rect x="96" y="228" width="354" height="186" rx="20" fill="#eef7ff" stroke="#9ac2e8"/>
+    <text x="132" y="290" font-size="28" font-weight="700" fill="#17345f">IRIKit value</text>
+    <text x="132" y="338" font-size="20" fill="#365783">Unicode IRI text</text>
+    <text x="132" y="374" font-family="SF Mono, Menlo, monospace" font-size="19" fill="#263344">/people/renee</text>
+    <rect x="750" y="228" width="354" height="186" rx="20" fill="#fff6e8" stroke="#e7bd72"/>
+    <text x="786" y="290" font-size="28" font-weight="700" fill="#604012">Foundation URL</text>
+    <text x="786" y="338" font-size="20" fill="#765a2d">URI-compatible text</text>
+    <text x="786" y="374" font-family="SF Mono, Menlo, monospace" font-size="19" fill="#263344">/people/ren%C3%A9e</text>
+  </g>
+  <path d="M482 292h236" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+  <path d="M706 280l18 12-18 12" fill="none" stroke="#7e8794" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M718 350H482" stroke="#7e8794" stroke-width="4" stroke-linecap="round"/>
+  <path d="M494 338l-18 12 18 12" fill="none" stroke="#7e8794" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="506" y="258" font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="20" fill="#526070">URL(iri)</text>
+  <text x="506" y="392" font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="20" fill="#526070">try IRI(url)</text>
+</svg>
