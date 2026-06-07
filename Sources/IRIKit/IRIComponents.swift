@@ -40,6 +40,37 @@ public struct IRIComponents {
         self.fragment = fragment
     }
 
+    /// Creates component values for an absolute IRI with structured query items.
+    ///
+    /// Query items are joined with `&` and stored as the query component without
+    /// applying percent-encoding. An empty query item list omits the query
+    /// component. Use the raw `query:` initializer when an explicit empty query
+    /// is required.
+    ///
+    /// - Parameters:
+    ///   - scheme: The IRI scheme.
+    ///   - authority: The authority component, when the IRI uses `//`.
+    ///   - path: The path component.
+    ///   - queryItems: The query items to join with `&`.
+    ///   - fragment: The fragment component without the leading number sign.
+    public init(
+        scheme: String,
+        authority: String? = nil,
+        path: String = "",
+        queryItems: [IRIQueryItem],
+        fragment: String? = nil
+    ) {
+        self.init(
+            scheme: scheme,
+            authority: authority,
+            path: path,
+            query: queryItems.isEmpty
+                ? nil
+                : queryItems.map(\.string).joined(separator: "&"),
+            fragment: fragment
+        )
+    }
+
     /// Creates a validated absolute IRI from these components.
     ///
     /// - Throws: `IRIError.invalidIRI` when the assembled character sequence

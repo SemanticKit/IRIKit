@@ -1,6 +1,6 @@
 # ``IRIKit``
 
-Construct standards-backed Internationalized Resource Identifiers in Swift.
+Construct standards-backed Internationalized Resource Identifiers (IRIs) in Swift.
 
 ## Overview
 
@@ -12,7 +12,8 @@ Identifier, including an optional fragment. Use ``AbsoluteIRI`` when the value
 must match RFC 3987's `absolute-IRI` production and therefore must not include a
 fragment. Use ``IRIReference`` when a value may be relative to another IRI. Use
 ``IRIComponents`` or Foundation `URLComponents` when you want component-based
-construction, and use ``IRITemplate`` when you need a reusable construction
+construction. Use ``IRIQueryItem`` when callers provide query names and values
+separately, and use ``IRITemplate`` when you need a reusable construction
 pattern that expands runtime values into a validated IRI.
 
 The library preserves IRI text as Unicode and provides Foundation URL
@@ -27,7 +28,9 @@ let components = IRIComponents(
     scheme: "https",
     authority: "example.com",
     path: "/articles/rosé",
-    query: "view=summary"
+    queryItems: [
+        IRIQueryItem(name: "view", value: "summary")
+    ]
 )
 
 print(article.rawValue)
@@ -47,6 +50,7 @@ print(URL(article).absoluteString)
 - Use ``AbsoluteIRI`` for absolute identifiers that must not include fragments.
 - Use ``IRIComponents`` for structured construction from generic syntax
   components.
+- Use ``IRIQueryItem`` for structured query construction before validation.
 - Use ``IRIReference`` for document links, fragments, and relative references.
 - Use ``IRITemplate`` for reusable construction of absolute IRIs from named
   values.
@@ -70,11 +74,18 @@ inherits URI generic syntax.
 - <doc:HandlingValidationAndIdentity>
 - <doc:UsingIRIKitValues>
 
-### Core Types
+### Creating IRIs
 
-- ``IRI``
-- ``AbsoluteIRI``
-- ``IRIComponents``
-- ``IRIReference``
-- ``IRITemplate``
-- ``IRIError``
+Use ``IRI`` for absolute identifiers that may include fragments,
+``AbsoluteIRI`` for absolute identifiers without fragments, and
+``IRIReference`` for relative or fragment references.
+
+### Building IRIs from Components
+
+Use ``IRIComponents`` to assemble an IRI from generic syntax components,
+``IRIQueryItem`` for query names and values, and ``IRITemplate`` for reusable
+runtime construction.
+
+### Handling Errors
+
+Handle ``IRIError`` when validation rejects invalid IRI text.
