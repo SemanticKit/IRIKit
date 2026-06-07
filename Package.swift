@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "SemanticKit",
+    name: "IRIKit",
     platforms: [
         .macOS(.v26),
         .iOS(.v26),
@@ -15,17 +15,9 @@ let package = Package(
             targets: ["IRIKit"]
         ),
     ],
-    dependencies: [
-        .package(url: "https://github.com/SemanticKit/ABNFKit.git", from: "main"),
-        .package(url: "https://github.com/SemanticKit/EBNFKit.git", from: "main"),
-    ],
     targets: [
         .target(
-            name: "IRIKit",
-            exclude: [
-                "Documentation",
-                "README.md",
-            ]
+            name: "IRIKit"
         ),
         .testTarget(
             name: "IRIKitTests",

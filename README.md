@@ -1,68 +1,100 @@
 # IRIKit
 
-IRIKit owns standards-backed Internationalized Resource Identifier support.
+IRIKit provides Swift value types for working with RFC 3987
+Internationalized Resource Identifiers (IRIs).
 
-## Source Authorities
+Use IRIKit to validate IRI text, inspect parsed components, build IRIs from
+components, preserve exact Unicode identity, and bridge to Foundation URL types
+when URI-compatible text is required.
 
-Use these standards as implementation authority:
+## Installation
 
-1. RFC 3987, Internationalized Resource Identifiers (IRIs):
-   <https://datatracker.ietf.org/doc/html/rfc3987>
-   Local reference text: `Sources/IRIKit/Documentation/RFC3987.md`
-2. RFC 3986, Uniform Resource Identifier (URI): Generic Syntax:
-   <https://datatracker.ietf.org/doc/html/rfc3986>
+Add IRIKit as a Swift Package Manager dependency:
 
-RFC 3987 is the primary authority for IRI syntax, IRI references, mapping IRIs
-to URIs, comparison, normalization, bidirectional IRIs, and use requirements.
-RFC 3986 is supporting authority where RFC 3987 inherits URI component syntax,
-reserved characters, relative-reference behavior, and URI comparison concepts.
+```swift
+dependencies: [
+    .package(url: "https://github.com/SemanticKit/IRIKit.git", branch: "main"),
+]
+```
 
-## API Shape References
+Then add `IRIKit` to the target that uses it:
 
-These articles are reading material for Swift API ergonomics. They are not
-standards authority and must not override RFC requirements.
+```swift
+.target(
+    name: "YourTarget",
+    dependencies: ["IRIKit"]
+)
+```
 
-- Modern URL construction in Swift:
-  <https://www.swiftbysundell.com/articles/modern-url-construction-in-swift/>
-- Defining static URLs using string literals:
-  <https://www.swiftbysundell.com/tips/defining-static-urls-using-string-literals/>
-- Constructing URLs in Swift:
-  <https://www.swiftbysundell.com/articles/constructing-urls-in-swift/>
+## Usage
 
-Use these references to evaluate Swift-facing API shape such as static values,
-literal ergonomics, component-based construction, dynamic path/query assembly,
-and template-like construction. Do not copy Foundation URL behavior when it
-conflicts with RFC 3987 or when it introduces URL-specific behavior that is not
-part of IRIKit.
+Create an absolute IRI with validation:
 
-## Design Boundary
+```swift
+import IRIKit
 
-IRIKit provides IRI and URI-adjacent foundation types only. The target may
-define IRI values, IRI references, IRI templates, parsing, validation,
-comparison, normalization, and URI mapping as required by the IRI and URI
-standards.
+let iri = try IRI(validating: "https://example.com/people/renée#profile")
 
-## RFC Compliance Tests
+iri.scheme
+// "https"
 
-RFC 3987 coverage belongs in `Tests/IRIKitTests/RFC3987/RFC3987ComplianceTests.swift`.
-That suite is the executable assertion surface for standards compliance.
+iri.authority
+// "example.com"
 
-## Improvement Candidates
+iri.path
+// "/people/renée"
 
-1. Add component-based construction.
-   A type like `IRIComponents` or `IRIBuilder` would let callers set `scheme`, `authority`, `path`, `queryItems`, and `fragment` without hand-concatenating strings. This matches the URLComponents lesson from [Constructing URLs in Swift](https://www.swiftbysundell.com/articles/constructing-urls-in-swift/).
+iri.fragment
+// "profile"
+```
 
-2. Add append-style APIs.
-   `iri.appending(pathComponent:)`, `iri.appending(pathComponents:)`, and `iri.appending(queryItems:)` would make dynamic IRI construction feel closer to modern `URL` APIs from [Modern URL construction in Swift](https://www.swiftbysundell.com/articles/modern-url-construction-in-swift/).
+Use `AbsoluteIRI` when fragments are not allowed:
 
-3. Add an `IRIQueryItem` value type.
-   This gives query construction a structured API instead of raw strings, while keeping encoding/mapping RFC-backed.
+```swift
+let canonical = try AbsoluteIRI(validating: "https://example.com/people/renée")
+```
 
-4. Add static construction support.
-   Static construction improves fixed IRI ergonomics through `StaticString` and string-literal entry points. Invalid static literals fail validation when constructed. The Sundell string-literal article is useful here, but archived: [Defining static URLs using string literals](https://www.swiftbysundell.com/tips/defining-static-urls-using-string-literals/).
+Use `IRIReference` when relative references or fragment-only references are
+valid input:
 
-5. Consider a macro later.
-   A `#iri("https://example.com/…")` macro could validate static IRIs at compile time, mirroring the modern static URL macro idea. That should be a later slice because it adds tooling surface.
+```swift
+let reference = try IRIReference(validating: "../people/renée#profile")
+```
 
-6. Improve `IRITemplate`.
-   Current templates expand raw string values. A better version would support typed values and explicit expansion policies for path segments vs query values.
+Build values from components when callers provide generic IRI syntax pieces:
+
+```swift
+var components = IRIComponents(
+    scheme: "https",
+    authority: "example.com",
+    path: "/people/renée"
+)
+components.query = "view=summary"
+
+let built = try components.iri()
+```
+
+Bridge to Foundation when another API needs URI-compatible text:
+
+```swift
+import Foundation
+
+URL(iri).absoluteString
+// "https://example.com/people/ren%C3%A9e#profile"
+```
+
+## Core Types
+
+- `IRI`: An absolute RFC 3987 IRI that may include a fragment.
+- `AbsoluteIRI`: An RFC 3987 `absolute-IRI`, which excludes fragments.
+- `IRIReference`: An absolute, relative, or fragment IRI reference.
+- `IRIComponents`: Mutable component storage for assembling an IRI.
+- `IRITemplate`: A reusable template that expands runtime values into an IRI.
+- `IRIError`: Validation and template-expansion errors.
+
+## Standards
+
+IRIKit follows RFC 3987 for IRI syntax, references, comparison, and URI mapping.
+It uses RFC 3986 where RFC 3987 inherits URI generic syntax.
+
+A local copy of RFC 3987 is included at `Documentation/RFC3987.md`.

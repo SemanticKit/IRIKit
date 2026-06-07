@@ -12,7 +12,6 @@ enum IRIParser {
         let rest = string[string.index(after: schemeEnd)...]
         do {
             let components = try parseHierPart(rest, scheme: scheme)
-            try validateCharacters(in: components.authority ?? "", allowsPrivate: false)
             try validateAuthority(components.authority)
             try validatePathCharacters(in: components.path)
             try validateCharacters(in: components.query ?? "", allowsPrivate: true)
@@ -24,10 +23,46 @@ enum IRIParser {
     }
 
     static func parseIRIReference(_ string: String) throws {
-        try validateCharacters(in: string, allowsPrivate: false, allowsFragment: true)
-        if string.firstIndex(of: ":").map({ isValidScheme(String(string[..<$0])) }) == true {
-            _ = try parseIRI(string)
+        if let colon = string.firstIndex(of: ":"),
+            string[..<colon].allSatisfy({ $0 != "/" && $0 != "?" && $0 != "#" })
+        {
+            guard isValidScheme(String(string[..<colon])) else {
+                throw IRIError.invalidIRIReference(string)
+            }
+
+            do {
+                _ = try parseIRI(string)
+            } catch IRIError.invalidIRI {
+                throw IRIError.invalidIRIReference(string)
+            }
+            return
         }
+
+        try parseRelativeReference(string)
+    }
+
+    private static func parseRelativeReference(_ string: String) throws {
+        let fragmentSplit = split(string[...], at: "#")
+        let querySplit = split(fragmentSplit.head, at: "?")
+        var relativePart = querySplit.head
+        var authority: String?
+
+        if relativePart.hasPrefix("//") {
+            relativePart.removeFirst(2)
+            let authorityEnd = relativePart.firstIndex(of: "/") ?? relativePart.endIndex
+            authority = String(relativePart[..<authorityEnd])
+            relativePart = relativePart[authorityEnd...]
+        } else if !relativePart.hasPrefix("/") {
+            let firstSegmentEnd = relativePart.firstIndex(of: "/") ?? relativePart.endIndex
+            guard !relativePart[..<firstSegmentEnd].contains(":") else {
+                throw IRIError.invalidIRIReference(string)
+            }
+        }
+
+        try validateAuthority(authority)
+        try validatePathCharacters(in: String(relativePart))
+        try validateCharacters(in: querySplit.tail ?? "", allowsPrivate: true)
+        try validateCharacters(in: fragmentSplit.tail ?? "", allowsPrivate: false)
     }
 
     private static func parseHierPart(
@@ -40,11 +75,7 @@ enum IRIParser {
             remaining.removeFirst(2)
             let authorityEnd =
                 remaining.firstIndex { $0 == "/" || $0 == "?" || $0 == "#" } ?? remaining.endIndex
-            let authorityValue = String(remaining[..<authorityEnd])
-            guard !authorityValue.isEmpty else {
-                throw IRIError.invalidIRIReference(String(rest))
-            }
-            authority = authorityValue
+            authority = String(remaining[..<authorityEnd])
             remaining = remaining[authorityEnd...]
         }
 
@@ -108,8 +139,8 @@ enum IRIParser {
 
             let second = string.index(after: first)
             guard second < string.endIndex,
-                string[first].isHexDigit,
-                string[second].isHexDigit
+                isHexDigitCharacter(string[first]),
+                isHexDigitCharacter(string[second])
             else {
                 throw IRIError.invalidIRIReference(string)
             }
@@ -146,6 +177,10 @@ enum IRIParser {
             throw IRIError.invalidIRIReference(authority)
         }
 
+        if authorityPieces.count == 2 {
+            try validateUserInfo(String(authorityPieces[0]), authority: authority)
+        }
+
         let hostPort = String(authorityPieces.last ?? "")
         if hostPort.hasPrefix("[") {
             try validateIPLiteralHostPort(hostPort, authority: authority)
@@ -166,7 +201,16 @@ enum IRIParser {
             return
         }
 
-        guard pieces[1].allSatisfy({ $0.isNumber }) else {
+        guard pieces[1].allSatisfy(isDigitCharacter) else {
+            throw IRIError.invalidIRIReference(authority)
+        }
+    }
+
+    private static func validateUserInfo(_ userInfo: String, authority: String) throws {
+        try validatePercentEncoding(in: userInfo)
+        guard userInfo.unicodeScalars.allSatisfy({ scalar in
+            isIUnreserved(scalar) || isSubDelimiter(scalar) || scalar == ":" || scalar == "%"
+        }) else {
             throw IRIError.invalidIRIReference(authority)
         }
     }
@@ -183,7 +227,7 @@ enum IRIParser {
 
         if afterBracket < hostPort.endIndex {
             let portStart = hostPort.index(after: afterBracket)
-            guard hostPort[portStart...].allSatisfy({ $0.isNumber }) else {
+            guard hostPort[portStart...].allSatisfy(isDigitCharacter) else {
                 throw IRIError.invalidIRIReference(authority)
             }
         }
@@ -197,7 +241,7 @@ enum IRIParser {
 
     private static func validateRegisteredOrIPv4Host(_ host: String, authority: String) throws {
         if host.contains("."),
-            host.allSatisfy({ $0.isNumber || $0 == "." })
+            host.allSatisfy({ isDigitCharacter($0) || $0 == "." })
         {
             guard isValidIPv4Address(host) else {
                 throw IRIError.invalidIRIReference(authority)
@@ -229,13 +273,14 @@ enum IRIParser {
 
         guard !version.isEmpty,
             !address.isEmpty,
-            version.allSatisfy(\.isHexDigit)
+            version.allSatisfy(isHexDigitCharacter)
         else {
             return false
         }
 
         return address.unicodeScalars.allSatisfy {
-            isIUnreserved($0) || isSubDelimiter($0) || $0 == ":"
+            isAlpha($0) || isDigit($0) || $0 == "-" || $0 == "." || $0 == "_" || $0 == "~"
+                || isSubDelimiter($0) || $0 == ":"
         }
     }
 
@@ -315,7 +360,7 @@ enum IRIParser {
         guard groups.allSatisfy({ group in
             !group.isEmpty
                 && group.count <= 4
-                && group.allSatisfy(\.isHexDigit)
+                && group.allSatisfy(isHexDigitCharacter)
         }) else {
             return nil
         }
@@ -331,7 +376,7 @@ enum IRIParser {
 
         return pieces.allSatisfy { piece in
             guard !piece.isEmpty,
-                piece.allSatisfy(\.isNumber),
+                piece.allSatisfy(isDigitCharacter),
                 piece.count == 1 || piece.first != "0",
                 let value = Int(piece)
             else {
@@ -425,6 +470,18 @@ enum IRIParser {
         default:
             false
         }
+    }
+
+    private static func isHexDigitCharacter(_ character: Character) -> Bool {
+        character.unicodeScalars.count == 1 && isHexDigit(character.unicodeScalars.first!)
+    }
+
+    private static func isDigitCharacter(_ character: Character) -> Bool {
+        character.unicodeScalars.count == 1 && isDigit(character.unicodeScalars.first!)
+    }
+
+    private static func isHexDigit(_ scalar: Unicode.Scalar) -> Bool {
+        isDigit(scalar) || (0x41...0x46).contains(scalar.value) || (0x61...0x66).contains(scalar.value)
     }
 
     private static func isAlpha(_ scalar: Unicode.Scalar) -> Bool {

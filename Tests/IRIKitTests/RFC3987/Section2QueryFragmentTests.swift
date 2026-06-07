@@ -18,6 +18,13 @@ extension RFC3987ComplianceTests {
             #expect(iri.rawValue == iriString)
         }
 
+        @Test("Relative-reference iquery also permits iprivate characters.")
+        func acceptsPrivateCharactersInRelativeReferenceQuery() throws {
+            let reference = try IRIReference(validating: "?\u{E000}")
+
+            #expect(reference.rawValue == "?\u{E000}")
+        }
+
         @Test(
             "ifragment = *( ipchar / '/' / '?' )",
             arguments: [

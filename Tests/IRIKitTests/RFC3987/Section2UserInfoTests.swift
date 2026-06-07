@@ -40,5 +40,18 @@ extension RFC3987ComplianceTests {
 
             #expect(iri.authority == "example.com")
         }
+
+        @Test(
+            "iuserinfo excludes gen-delims other than ':'.",
+            arguments: [
+                "https://user[name@example.com/",
+                "https://user]name@example.com/",
+            ]
+        )
+        func rejectsDisallowedUserInfoCharacters(_ iriString: String) {
+            #expect(throws: IRIError.invalidIRI(iriString)) {
+                try IRI(validating: iriString)
+            }
+        }
     }
 }

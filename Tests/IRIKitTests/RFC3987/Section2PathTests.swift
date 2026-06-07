@@ -47,6 +47,22 @@ extension RFC3987ComplianceTests {
                     query: nil,
                     fragment: nil
                 ),
+                AbsoluteIRICase(
+                    iri: "urn://",
+                    scheme: "urn",
+                    authority: "",
+                    path: "",
+                    query: nil,
+                    fragment: nil
+                ),
+                AbsoluteIRICase(
+                    iri: "urn:////path",
+                    scheme: "urn",
+                    authority: "",
+                    path: "//path",
+                    query: nil,
+                    fragment: nil
+                ),
             ]
         )
         func acceptsHierPartPathAlternatives(_ testCase: AbsoluteIRICase) throws {
@@ -71,17 +87,12 @@ extension RFC3987ComplianceTests {
             }
         }
 
-        @Test(
-            "When authority is absent, ipath-absolute begins with '/' but not '//'.",
-            arguments: [
-                "urn://",
-                "urn:////path",
-            ]
-        )
-        func rejectsNoAuthorityPathsBeginningWithDoubleSlash(_ iriString: String) {
-            #expect(throws: IRIError.invalidIRI(iriString)) {
-                try IRI(validating: iriString)
-            }
+        @Test("A leading '//' selects the iauthority branch, whose ihost may be an empty ireg-name.")
+        func acceptsEmptyAuthorityBecauseIregNameCanBeEmpty() throws {
+            let iri = try IRI(validating: "urn://")
+
+            #expect(iri.authority == "")
+            #expect(iri.path == "")
         }
 
         @Test(
