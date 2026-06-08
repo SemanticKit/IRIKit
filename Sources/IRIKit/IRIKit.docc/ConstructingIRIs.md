@@ -69,14 +69,14 @@ let components = IRIComponents(
     fragment: "details"
 )
 
-let iri = try components.iri()
+let iri = try IRI(components: components)
 ```
 
 When query names and values are available separately, use ``IRIQueryItem`` and
 let ``IRIComponents`` join the items with `&`.
 
 ```swift
-let filtered = IRIComponents(
+let queryComponents = IRIComponents(
     scheme: "https",
     authority: "example.com",
     path: "/people/renée",
@@ -86,12 +86,14 @@ let filtered = IRIComponents(
     ]
 )
 
-print(try filtered.iri().rawValue)
+let queryIRI = try IRI(components: queryComponents)
+
+print(queryIRI.rawValue)
 // https://example.com/people/renée?view=summary&draft
 ```
 
 The assembled value is available as ``IRIComponents/string`` and is validated
-before ``IRIComponents/iri()`` returns.
+when you create an ``IRI`` from the components.
 
 ```swift
 components.string

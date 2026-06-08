@@ -57,7 +57,7 @@ var components = IRIComponents(
 
 components.fragment = "intro"
 
-let article = try components.iri()
+let article = try IRI(components: components)
 ```
 
 Use ``IRIQueryItem`` when query names and values are available separately. The
@@ -65,7 +65,7 @@ items assemble into the query component and the complete IRI is validated when
 you create the final value.
 
 ```swift
-let filtered = IRIComponents(
+let queryComponents = IRIComponents(
     scheme: "https",
     authority: "example.com",
     path: "/articles/rosé",
@@ -75,7 +75,9 @@ let filtered = IRIComponents(
     ]
 )
 
-print(try filtered.iri().query!)
+let article = try IRI(components: queryComponents)
+
+print(article.query!)
 // view=summary&draft
 ```
 

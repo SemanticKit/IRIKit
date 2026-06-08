@@ -15,7 +15,7 @@
     <text x="862" y="276" fill="#526070">IRIReference</text>
     <rect x="238" y="404" width="290" height="110" rx="16" fill="#eef7ff" stroke="#9ac2e8"/>
     <text x="270" y="452" font-weight="700" fill="#17345f">Components</text>
-    <text x="270" y="486" fill="#365783">IRIComponents.iri()</text>
+    <text x="270" y="486" fill="#365783">IRI(components:)</text>
     <rect x="672" y="404" width="290" height="110" rx="16" fill="#eef7ff" stroke="#9ac2e8"/>
     <text x="704" y="452" font-weight="700" fill="#17345f">Template</text>
     <text x="704" y="486" fill="#365783">IRITemplate.expand(_:)</text>

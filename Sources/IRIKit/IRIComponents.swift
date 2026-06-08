@@ -71,14 +71,6 @@ public struct IRIComponents {
         )
     }
 
-    /// Creates a validated absolute IRI from these components.
-    ///
-    /// - Throws: `IRIError.invalidIRI` when the assembled character sequence
-    ///   is not an absolute IRI.
-    public func iri() throws -> IRI {
-        try IRI(validating: string)
-    }
-
     /// The assembled IRI character sequence.
     public var string: String {
         var result = "\(scheme):"

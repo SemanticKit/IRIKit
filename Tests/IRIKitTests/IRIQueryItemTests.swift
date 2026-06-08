@@ -38,7 +38,7 @@ struct IRIQueryItemTests {
             fragment: "details"
         )
 
-        let iri = try components.iri()
+        let iri = try IRI(components: components)
 
         #expect(
             components.string
@@ -71,7 +71,7 @@ struct IRIQueryItemTests {
         )
 
         #expect(throws: IRIError.invalidIRI("https://example.com/search?bad%=value")) {
-            try components.iri()
+            try IRI(components: components)
         }
     }
 
