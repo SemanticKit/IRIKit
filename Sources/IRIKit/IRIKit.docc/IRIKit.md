@@ -10,6 +10,10 @@ Use IRIKit when your Swift code needs to validate, store, inspect, or construct 
 
 Choose ``IRI`` for an absolute identifier, ``AbsoluteIRI`` when fragments are not allowed, and ``IRIReference`` when the text may be relative to another identifier. Use ``IRIComponents`` and ``IRIQueryItem`` when an identifier is assembled from separate parts, and use ``IRITemplate`` when part of the identifier is filled in at runtime.
 
+You can build an IRI from the parts of the identifier instead of writing the
+whole string yourself. This example uses `scheme`, `authority`, `path`, and
+`query`, then asks IRIKit to validate the finished ``IRI``.
+
 ```swift
 import Foundation
 import IRIKit
@@ -19,9 +23,7 @@ let components = IRIComponents(
     scheme: "https",
     authority: "example.com",
     path: "/articles/rosé",
-    queryItems: [
-        IRIQueryItem(name: "view", value: "summary")
-    ]
+    query: "view=summary"
 )
 
 print(article.rawValue)
@@ -32,6 +34,25 @@ print(try components.iri().rawValue)
 
 print(URL(article).absoluteString)
 // https://example.com/articles/ros%C3%A9
+```
+
+If the query comes from form fields, filters, or other name-value data, pass
+those values as ``IRIQueryItem`` values instead of joining strings by hand.
+
+```swift
+import IRIKit
+
+let article = IRIComponents(
+    scheme: "https",
+    authority: "example.com",
+    path: "/articles/rosé",
+    queryItems: [
+        IRIQueryItem(name: "view", value: "summary")
+    ]
+)
+
+print(try article.iri().rawValue)
+// https://example.com/articles/rosé?view=summary
 ```
 
 IRIKit follows [RFC 3987](https://datatracker.ietf.org/doc/html/rfc3987) for IRIs and uses [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) where IRI syntax inherits URI rules.
