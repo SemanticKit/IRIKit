@@ -25,11 +25,12 @@ let components = IRIComponents(
     path: "/articles/rosé",
     query: "view=summary"
 )
+let componentArticle = try IRI(components: components)
 
 print(article.rawValue)
 // https://example.com/articles/rosé
 
-print(try components.iri().rawValue)
+print(componentArticle.rawValue)
 // https://example.com/articles/rosé?view=summary
 
 print(URL(article).absoluteString)
@@ -42,7 +43,7 @@ those values as ``IRIQueryItem`` values instead of joining strings by hand.
 ```swift
 import IRIKit
 
-let article = IRIComponents(
+let components = IRIComponents(
     scheme: "https",
     authority: "example.com",
     path: "/articles/rosé",
@@ -50,8 +51,9 @@ let article = IRIComponents(
         IRIQueryItem(name: "view", value: "summary")
     ]
 )
+let article = try IRI(components: components)
 
-print(try article.iri().rawValue)
+print(article.rawValue)
 // https://example.com/articles/rosé?view=summary
 ```
 
