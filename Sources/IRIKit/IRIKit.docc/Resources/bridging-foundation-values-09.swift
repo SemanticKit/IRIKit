@@ -8,7 +8,7 @@ components.path = "/people/renée"
 components.query = "view=summary"
 
 let iriComponents = IRIComponents(components)
-let validated = try iriComponents.iri()
+let validated = try IRI(components: iriComponents)
 
 validated.rawValue
 // "https://example.com/people/ren%C3%A9e?view=summary"

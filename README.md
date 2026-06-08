@@ -55,9 +55,6 @@ That suite is the executable assertion surface for standards compliance.
 2. Add append-style APIs.
    `iri.appending(pathComponent:)`, `iri.appending(pathComponents:)`, and `iri.appending(queryItems:)` would make dynamic IRI construction feel closer to modern `URL` APIs from [Modern URL construction in Swift](https://www.swiftbysundell.com/articles/modern-url-construction-in-swift/).
 
-3. Add an `IRIQueryItem` value type.
-   This gives query construction a structured API instead of raw strings, while keeping encoding/mapping RFC-backed.
-
 4. Add static construction support.
    Static construction improves fixed IRI ergonomics through `StaticString` and string-literal entry points. Invalid static literals fail validation when constructed. The Sundell string-literal article is useful here, but archived: [Defining static URLs using string literals](https://www.swiftbysundell.com/tips/defining-static-urls-using-string-literals/).
 

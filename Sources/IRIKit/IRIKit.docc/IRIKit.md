@@ -1,22 +1,18 @@
 # ``IRIKit``
 
-Construct standards-backed Internationalized Resource Identifiers in Swift.
+Work with Internationalized Resource Identifiers (IRIs) in Swift.
 
 ## Overview
 
-IRIKit provides small value types for validating, inspecting, constructing, and
-bridging Internationalized Resource Identifiers in Swift.
+An Internationalized Resource Identifier is a resource identifier that can contain Unicode text. IRIs let code preserve identifiers such as `https://example.com/articles/rosé` without forcing the readable characters into percent-encoded URI form.
 
-Use ``IRI`` when a value must be an absolute Internationalized Resource
-Identifier, including an optional fragment. Use ``AbsoluteIRI`` when the value
-must match RFC 3987's `absolute-IRI` production and therefore must not include a
-fragment. Use ``IRIReference`` when a value may be relative to another IRI. Use
-``IRIComponents`` or Foundation `URLComponents` when you want component-based
-construction, and use ``IRITemplate`` when you need a reusable construction
-pattern that expands runtime values into a validated IRI.
+Use IRIKit when your Swift code needs to validate, store, inspect, or construct those identifiers as values. The package keeps the original IRI text available for your model code and provides Foundation `URL` conversion when an API requires URI-compatible text.
 
-The library preserves IRI text as Unicode and provides Foundation URL
-conversion when a protocol or format requires URI-compatible characters.
+Choose ``IRI`` for an absolute identifier, ``AbsoluteIRI`` when fragments are not allowed, and ``IRIReference`` when the text may be relative to another identifier. Use ``IRIComponents`` and ``IRIQueryItem`` when an identifier is assembled from separate parts, and use ``IRITemplate`` when part of the identifier is filled in at runtime.
+
+You can build an IRI from the parts of the identifier instead of writing the
+whole string yourself. This example uses `scheme`, `authority`, `path`, and
+`query`, then asks IRIKit to validate the finished ``IRI``.
 
 ```swift
 import Foundation
@@ -29,52 +25,62 @@ let components = IRIComponents(
     path: "/articles/rosé",
     query: "view=summary"
 )
+let componentArticle = try IRI(components: components)
 
 print(article.rawValue)
 // https://example.com/articles/rosé
 
-print(try components.iri().rawValue)
+print(componentArticle.rawValue)
 // https://example.com/articles/rosé?view=summary
 
 print(URL(article).absoluteString)
 // https://example.com/articles/ros%C3%A9
 ```
 
-### Choosing a Type
+If the query comes from form fields, filters, or other name-value data, pass
+those values as ``IRIQueryItem`` values instead of joining strings by hand.
 
-- Use ``IRI`` for absolute identifiers that stand on their own and may include
-  fragments.
-- Use ``AbsoluteIRI`` for absolute identifiers that must not include fragments.
-- Use ``IRIComponents`` for structured construction from generic syntax
-  components.
-- Use ``IRIReference`` for document links, fragments, and relative references.
-- Use ``IRITemplate`` for reusable construction of absolute IRIs from named
-  values.
-- Use Foundation `URL` and `URLComponents` bridging when an API requires
-  URI-compatible text.
+```swift
+import IRIKit
 
-### Standards
+let components = IRIComponents(
+    scheme: "https",
+    authority: "example.com",
+    path: "/articles/rosé",
+    queryItems: [
+        IRIQueryItem(name: "view", value: "summary")
+    ]
+)
+let article = try IRI(components: components)
 
-IRIKit follows [RFC 3987](https://datatracker.ietf.org/doc/html/rfc3987) for
-Internationalized Resource Identifiers and uses
-[RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) where RFC 3987
-inherits URI generic syntax.
+print(article.rawValue)
+// https://example.com/articles/rosé?view=summary
+```
+
+IRIKit follows [RFC 3987](https://datatracker.ietf.org/doc/html/rfc3987) for IRIs and uses [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) where IRI syntax inherits URI rules.
 
 ## Topics
 
-### Getting Started
+### Learn When to Use IRIs
 
 - <doc:ChoosingIRIKitTypes>
 - <doc:ConstructingIRIs>
 - <doc:BridgingFoundationTypes>
-- <doc:HandlingValidationAndIdentity>
-- <doc:UsingIRIKitValues>
 
-### Core Types
+### Work with IRI Values
 
 - ``IRI``
 - ``AbsoluteIRI``
-- ``IRIComponents``
 - ``IRIReference``
+
+### Build IRIs from Parts
+
+- ``IRIComponents``
+- ``IRIQueryItem``
 - ``IRITemplate``
+
+### Handle Invalid Text
+
 - ``IRIError``
+- <doc:HandlingValidationAndIdentity>
+- <doc:UsingIRIKitValues>

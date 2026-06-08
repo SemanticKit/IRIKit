@@ -12,7 +12,7 @@ struct IRIComponentsTests {
             fragment: "details"
         )
 
-        let iri = try components.iri()
+        let iri = try IRI(components: components)
 
         #expect(components.string == "https://example.com/people/renée?view=summary#details")
         #expect(iri.rawValue == components.string)
@@ -31,7 +31,7 @@ struct IRIComponentsTests {
         )
 
         #expect(throws: IRIError.invalidIRI("1https://example.com/people")) {
-            try components.iri()
+            try IRI(components: components)
         }
     }
 }

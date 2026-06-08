@@ -69,11 +69,31 @@ let components = IRIComponents(
     fragment: "details"
 )
 
-let iri = try components.iri()
+let iri = try IRI(components: components)
+```
+
+When query names and values are available separately, use ``IRIQueryItem`` and
+let ``IRIComponents`` join the items with `&`.
+
+```swift
+let queryComponents = IRIComponents(
+    scheme: "https",
+    authority: "example.com",
+    path: "/people/renée",
+    queryItems: [
+        IRIQueryItem(name: "view", value: "summary"),
+        IRIQueryItem(name: "draft")
+    ]
+)
+
+let queryIRI = try IRI(components: queryComponents)
+
+print(queryIRI.rawValue)
+// https://example.com/people/renée?view=summary&draft
 ```
 
 The assembled value is available as ``IRIComponents/string`` and is validated
-before ``IRIComponents/iri()`` returns.
+when you create an ``IRI`` from the components.
 
 ```swift
 components.string
@@ -194,6 +214,6 @@ first < second
 ## Next Steps
 
 Use ``IRI`` anywhere your package needs an absolute standards-backed identifier.
-Use ``AbsoluteIRI`` when fragments are out of scope, ``IRIComponents`` for
-structured assembly, ``IRIReference`` for document-local links, and
-``IRITemplate`` for reusable construction from dynamic values.
+Use ``AbsoluteIRI`` when fragments are out of scope, ``IRIComponents`` and
+``IRIQueryItem`` for structured assembly, ``IRIReference`` for document-local
+links, and ``IRITemplate`` for reusable construction from dynamic values.

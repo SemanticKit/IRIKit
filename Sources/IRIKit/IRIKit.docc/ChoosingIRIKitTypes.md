@@ -57,7 +57,28 @@ var components = IRIComponents(
 
 components.fragment = "intro"
 
-let article = try components.iri()
+let article = try IRI(components: components)
+```
+
+Use ``IRIQueryItem`` when query names and values are available separately. The
+items assemble into the query component and the complete IRI is validated when
+you create the final value.
+
+```swift
+let queryComponents = IRIComponents(
+    scheme: "https",
+    authority: "example.com",
+    path: "/articles/rosé",
+    queryItems: [
+        IRIQueryItem(name: "view", value: "summary"),
+        IRIQueryItem(name: "draft")
+    ]
+)
+
+let article = try IRI(components: queryComponents)
+
+print(article.query!)
+// view=summary&draft
 ```
 
 Use the failable string initializer on ``IRIComponents`` when you need to
@@ -133,5 +154,6 @@ public IRIKit type.
 | ``IRI`` | Absolute IRIs that may include fragments | `validating:`, `components:`, `rawValue:`, string description, `string:`, string literal, `StaticString`, `Substring`, Foundation `URL`, Foundation `URLComponents` |
 | ``AbsoluteIRI`` | Absolute IRIs that must not include fragments | `validating:`, `rawValue:`, string description, string literal, Foundation `URL` |
 | ``IRIReference`` | Absolute, relative, and fragment references | `validating:`, `rawValue:`, string description, string literal, `StaticString`, `Substring`, Foundation `URL` |
-| ``IRIComponents`` | Mutable component assembly | component initializer, valid IRI string description, Foundation `URLComponents` |
+| ``IRIComponents`` | Mutable component assembly | component initializer, query-item initializer, valid IRI string description, Foundation `URLComponents` |
+| ``IRIQueryItem`` | Query item assembly | `name:value:`, `string`, string description |
 | ``IRITemplate`` | Reusable runtime expansion | `validating:`, `rawValue:`, string description, string literal, `StaticString`, `Substring`, `expand(_:)` |

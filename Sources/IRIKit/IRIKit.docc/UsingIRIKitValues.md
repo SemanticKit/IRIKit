@@ -79,6 +79,16 @@ components?.description
 // "https://example.com/people/renée#summary"
 ```
 
+``IRIQueryItem`` describes the query item text that it contributes to an
+``IRIComponents`` query.
+
+```swift
+let item = IRIQueryItem(name: "name", value: "renée")
+
+print(item.description)
+// name=renée
+```
+
 ## Transfer Across Concurrency Boundaries
 
 IRIKit public value types conform to `Sendable`, so they can cross Swift
@@ -93,4 +103,3 @@ let iri = try IRI(validating: "https://example.com/resource")
 
 await loadResource(named: iri)
 ```
-

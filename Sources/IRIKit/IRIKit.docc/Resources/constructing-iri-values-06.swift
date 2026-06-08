@@ -8,7 +8,7 @@ let components = IRIComponents(
     fragment: "details"
 )
 
-let iri = try components.iri()
+let iri = try IRI(components: components)
 
 iri.query
 // "view=summary"
