@@ -41,5 +41,36 @@ extension RFC3987ComplianceTests {
 
             #expect(lower < upper)
         }
+
+        @Test(
+            "Normalized comparison still begins from simple string comparison: identical IRIs stay equivalent.",
+            .tags(.normalization),
+            arguments: [
+                "https://example.com/a",
+                "urn:example:Animal:ferret:nose",
+                "http://example.com/?",
+                "http://example.com/#",
+            ]
+        )
+        func identicalIRIsAreEquivalent(_ string: String) throws {
+            let lhs = try IRI(validating: string)
+            let rhs = try IRI(validating: string)
+
+            #expect(lhs == rhs)
+            #expect(try lhs.isEquivalent(to: rhs))
+            #expect(try lhs.isEquivalent(to: rhs, under: .syntaxAndSchemeBased))
+        }
+
+        @Test(
+            "An empty normalization set compares like simple string comparison.",
+            .tags(.normalization)
+        )
+        func emptyNormalizationIsSimpleComparison() throws {
+            let lhs = try IRI(validating: "HTTP://example.com/%7e")
+            let rhs = try IRI(validating: "http://example.com/~")
+
+            #expect(try lhs.normalized([]) == lhs)
+            #expect(try !lhs.isEquivalent(to: rhs, under: []))
+        }
     }
 }

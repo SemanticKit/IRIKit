@@ -368,7 +368,7 @@ enum IRIParser {
             || (allowsFragment && scalar == "#")
     }
 
-    private static func isIUnreserved(_ scalar: Unicode.Scalar) -> Bool {
+    static func isIUnreserved(_ scalar: Unicode.Scalar) -> Bool {
         isAlpha(scalar) || isDigit(scalar) || scalar == "-" || scalar == "." || scalar == "_"
             || scalar == "~" || isUCSChar(scalar)
     }
@@ -377,11 +377,11 @@ enum IRIParser {
         ":/?[]@!$&'()*+,;=".unicodeScalars.contains(scalar)
     }
 
-    private static func isSubDelimiter(_ scalar: Unicode.Scalar) -> Bool {
+    static func isSubDelimiter(_ scalar: Unicode.Scalar) -> Bool {
         "!$&'()*+,;=".unicodeScalars.contains(scalar)
     }
 
-    private static func isUCSChar(_ scalar: Unicode.Scalar) -> Bool {
+    static func isUCSChar(_ scalar: Unicode.Scalar) -> Bool {
         switch scalar.value {
         case 0xA0...0xD7FF,
             0xF900...0xFDCF,
@@ -406,7 +406,7 @@ enum IRIParser {
         }
     }
 
-    private static func isIPrivate(_ scalar: Unicode.Scalar) -> Bool {
+    static func isIPrivate(_ scalar: Unicode.Scalar) -> Bool {
         switch scalar.value {
         case 0xE000...0xF8FF,
             0xF0000...0xFFFFD,
@@ -417,7 +417,7 @@ enum IRIParser {
         }
     }
 
-    private static func isBidiFormattingCharacter(_ scalar: Unicode.Scalar) -> Bool {
+    static func isBidiFormattingCharacter(_ scalar: Unicode.Scalar) -> Bool {
         switch scalar.value {
         case 0x200E...0x200F,
             0x202A...0x202E:

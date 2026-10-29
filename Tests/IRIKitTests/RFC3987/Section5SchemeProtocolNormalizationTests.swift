@@ -87,5 +87,129 @@ extension RFC3987ComplianceTests {
 
             #expect(source.rawValue != target.rawValue)
         }
+
+        @Test(
+            "HTTP scheme-based normalization makes the four RFC 3987 section 5.3.3 example IRIs equivalent.",
+            .tags(.normalization),
+            arguments: [
+                "http://example.com",
+                "http://example.com/",
+                "http://example.com:/",
+                "http://example.com:80/",
+            ]
+        )
+        func httpDefaultFormsAreEquivalent(_ string: String) throws {
+            let iri = try IRI(validating: string)
+
+            #expect(try iri.normalized(.syntaxAndSchemeBased).rawValue == "http://example.com/")
+        }
+
+        @Test(
+            "Scheme-based normalization removes empty and default ports and supplies an empty path as '/'.",
+            .tags(.normalization),
+            arguments: [
+                NormalizationCase("HTTPS://Example.org:443", .syntaxAndSchemeBased, expected: "https://example.org/"),
+                NormalizationCase("https://example.org:443/a?b", .syntaxAndSchemeBased, expected: "https://example.org/a?b"),
+                NormalizationCase("https://example.org?q", .syntaxAndSchemeBased, expected: "https://example.org/?q"),
+                NormalizationCase("https://example.org#f", .syntaxAndSchemeBased, expected: "https://example.org/#f"),
+                NormalizationCase("http://example.org:443/", .syntaxAndSchemeBased, expected: "http://example.org:443/"),
+                NormalizationCase("https://example.org:80/", .syntaxAndSchemeBased, expected: "https://example.org:80/"),
+                NormalizationCase("http://example.org:8080", .syntaxAndSchemeBased, expected: "http://example.org:8080/"),
+                NormalizationCase("http://example.org:0080/", .syntaxAndSchemeBased, expected: "http://example.org/"),
+                NormalizationCase("http://user@example.org:80/", .syntaxAndSchemeBased, expected: "http://user@example.org/"),
+                NormalizationCase("http://[::1]:80", .syntaxAndSchemeBased, expected: "http://[::1]/"),
+                NormalizationCase("http://192.0.2.1:/", .syntaxAndSchemeBased, expected: "http://192.0.2.1/"),
+                NormalizationCase("ws://example.org:80", .syntaxAndSchemeBased, expected: "ws://example.org/"),
+                NormalizationCase("wss://example.org:443/chat", .syntaxAndSchemeBased, expected: "wss://example.org/chat"),
+                NormalizationCase("ftp://example.org:21", .syntaxAndSchemeBased, expected: "ftp://example.org/"),
+            ]
+        )
+        func schemeBasedNormalization(_ testCase: NormalizationCase) throws {
+            let iri = try IRI(validating: testCase.input)
+
+            #expect(try iri.normalized(testCase.normalization).rawValue == testCase.expected)
+        }
+
+        @Test(
+            "Scheme-based normalization leaves schemes without a known rule unchanged.",
+            .tags(.normalization),
+            arguments: [
+                NormalizationCase("custom://example.com:/", .scheme, expected: "custom://example.com:/"),
+                NormalizationCase("custom://example.com", .scheme, expected: "custom://example.com"),
+                NormalizationCase("file:/path", .scheme, expected: "file:/path"),
+                NormalizationCase("urn:example:Animal:ferret:nose", .scheme, expected: "urn:example:Animal:ferret:nose"),
+                NormalizationCase("mailto:Someone@Example.org", .syntaxAndSchemeBased, expected: "mailto:Someone@Example.org"),
+            ]
+        )
+        func unknownSchemesAreUnchanged(_ testCase: NormalizationCase) throws {
+            let iri = try IRI(validating: testCase.input)
+
+            #expect(try iri.normalized(testCase.normalization).rawValue == testCase.expected)
+        }
+
+        @Test(
+            "Scheme-based normalization keeps empty query and fragment delimiters.",
+            .tags(.normalization)
+        )
+        func keepsEmptyComponentDelimiters() throws {
+            let emptyQuery = try IRI(validating: "http://example.com/?")
+            let emptyFragment = try IRI(validating: "http://example.com/#")
+            let bare = try IRI(validating: "http://example.com")
+
+            #expect(try emptyQuery.normalized(.syntaxAndSchemeBased).rawValue == "http://example.com/?")
+            #expect(try emptyFragment.normalized(.syntaxAndSchemeBased).rawValue == "http://example.com/#")
+            #expect(try !emptyQuery.isEquivalent(to: bare, under: .syntaxAndSchemeBased))
+            #expect(try !emptyFragment.isEquivalent(to: bare, under: .syntaxAndSchemeBased))
+        }
+
+        @Test(
+            "Scheme-based normalization rejects HTTP-family IRIs without a host.",
+            .tags(.normalization),
+            arguments: ["https:/relative", "http:relative", "http://:80/", "ws://user@/chat"]
+        )
+        func requiresHostForHTTPFamily(_ string: String) throws {
+            let iri = try IRI(validating: string)
+
+            #expect(throws: IRIError.invalidIRI(string)) {
+                _ = try iri.normalized(.syntaxAndSchemeBased)
+            }
+            #expect(try iri.normalized(.syntaxBased).scheme == iri.scheme)
+        }
+
+        @Test(
+            "Scheme-based normalization treats an IDN and its Punycode form as equivalent and keeps the legible form.",
+            .tags(.normalization),
+            arguments: [
+                SimpleComparisonCase(lhs: "http://résumé.example.org", rhs: "http://xn--rsum-bpad.example.org", areEqual: true),
+                SimpleComparisonCase(lhs: "https://bücher.example/", rhs: "https://XN--BCHER-KVA.example/", areEqual: true),
+                SimpleComparisonCase(lhs: "https://BÜCHER.Example/", rhs: "https://bücher.example/", areEqual: true),
+                SimpleComparisonCase(lhs: "http://他们为什么不说中文.example", rhs: "http://xn--ihqwcrb4cv8a8dqg056pqjye.example", areEqual: true),
+                SimpleComparisonCase(lhs: "http://3年B組金八先生.example", rhs: "http://xn--3B-ww4c5e180e575a65lsy2b.example", areEqual: true),
+                SimpleComparisonCase(lhs: "https://bücher.example/", rhs: "https://bucher.example/", areEqual: false),
+                SimpleComparisonCase(lhs: "custom://résumé.example.org", rhs: "custom://xn--rsum-bpad.example.org", areEqual: false),
+            ]
+        )
+        func idnPunycodeEquivalence(_ testCase: SimpleComparisonCase) throws {
+            let lhs = try IRI(validating: testCase.lhs)
+            let rhs = try IRI(validating: testCase.rhs)
+
+            #expect(try lhs.isEquivalent(to: rhs, under: .syntaxAndSchemeBased) == testCase.areEqual)
+        }
+
+        @Test(
+            "IDN scheme-based normalization produces the legible Unicode host, not ACE.",
+            .tags(.normalization),
+            arguments: [
+                NormalizationCase("http://xn--rsum-bpad.example.org", .syntaxAndSchemeBased, expected: "http://résumé.example.org/"),
+                NormalizationCase("https://Ｅｘａｍｐｌｅ.org/", .syntaxAndSchemeBased, expected: "https://example.org/"),
+                NormalizationCase("https://xn--invalid-.example/", .syntaxAndSchemeBased, expected: "https://xn--invalid-.example/"),
+                NormalizationCase("https://xn--.example/", .syntaxAndSchemeBased, expected: "https://xn--.example/"),
+            ]
+        )
+        func idnNormalFormIsLegible(_ testCase: NormalizationCase) throws {
+            let iri = try IRI(validating: testCase.input)
+
+            #expect(try iri.normalized(testCase.normalization).rawValue == testCase.expected)
+        }
     }
 }
