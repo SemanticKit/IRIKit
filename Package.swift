@@ -15,10 +15,6 @@ let package = Package(
             targets: ["IRIKit"]
         ),
     ],
-    dependencies: [
-        .package(url: "https://github.com/SemanticKit/ABNFKit.git", branch: "main"),
-        .package(url: "https://github.com/SemanticKit/EBNFKit.git", branch: "main"),
-    ],
     targets: [
         .target(
             name: "IRIKit",
