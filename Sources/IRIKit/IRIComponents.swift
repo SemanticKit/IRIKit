@@ -47,6 +47,10 @@ public struct IRIComponents {
     /// component. Use the raw `query:` initializer when an explicit empty query
     /// is required.
     ///
+    /// Because values are not percent-encoded, a "#" in a name or value ends
+    /// the query when the IRI is parsed. Write it as `%23`. ``IRI/init(components:)``
+    /// rejects components that do not read back unchanged.
+    ///
     /// - Parameters:
     ///   - scheme: The IRI scheme.
     ///   - authority: The authority component, when the IRI uses `//`.

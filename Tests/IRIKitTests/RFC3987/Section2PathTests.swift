@@ -107,6 +107,8 @@ extension RFC3987ComplianceTests {
                 IRIComponents(scheme: "urn", path: "a#b"),
                 IRIComponents(scheme: "urn", path: "a", query: "b#c"),
                 IRIComponents(scheme: "https", authority: "example.com/p", path: "/q"),
+                IRIComponents(scheme: "a:b", path: "c"),
+                IRIComponents(scheme: "urn", authority: "h?x"),
             ]
         )
         func rejectsComponentsThatDoNotRoundTrip(_ components: IRIComponents) {
@@ -138,7 +140,6 @@ extension RFC3987ComplianceTests {
             #expect(iri.query == components.query)
             #expect(iri.fragment == components.fragment)
         }
-
 
         @Test(
             "ipchar = iunreserved / pct-encoded / sub-delims / ':' / '@'",
