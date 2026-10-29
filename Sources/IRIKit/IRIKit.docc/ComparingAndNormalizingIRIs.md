@@ -52,12 +52,15 @@ Syntax-based normalization applies rules that hold for every IRI:
   written. The algorithm treats every path the same way, so a rootless path
   can become absolute: `foo:a/../b` becomes `foo:/b`, which is also what
   RFC 3986 section 5.2.2 gives when it resolves that IRI. When there is no
-  authority and the result would begin with `//`, such as `//b` from
-  `foo:a/../..//b`, the path is left as it is: RFC 3986 section 3.3 forbids
-  such a path, because the text would read as an authority and name a
-  different IRI, and RFC 3987 section 5.1 rules out that false positive.
-  Section 5.1 allows the false negative that remains: `foo:/.//a/./b` and
-  `foo:/.//a/b` are not equivalent.
+  authority the result can begin with `//`, such as `//b` from
+  `foo:a/../..//b`. RFC 3986 section 3.3 forbids that path in IRI text,
+  because the text would read as an authority and name a different IRI.
+  The path is still the algorithm's result, and comparison works on the
+  normalized components (RFC 3986 section 6.2.2), not on recomposed text:
+  `foo:/.//a/./b` and `foo:/.//a/b` are equivalent, and neither is
+  equivalent to `foo://a/b`, whose authority is `a`. ``IRI/normalized(_:)``
+  throws ``IRIError/normalFormHasNoText(_:)`` for such an IRI, because its
+  normal form has no text.
 
 ```swift
 let lhs = try IRI(validating: "example://a/b/c/%7Bfoo%7D/rosé")

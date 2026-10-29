@@ -134,7 +134,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "The label mapping is a fixed point with no pass bound, and equal normal forms are exactly the RFC 3490 label match (every code point of the Unicode 3.2 planes, alone and between ASCII letters).",
-            .tags(.normalization, .idna),
+            .tags(.normalization, .idna, .exhaustive),
             arguments: unicode3_2Planes.flatMap { plane in stride(from: plane << 16, to: (plane + 1) << 16, by: 0x4000) }
         )
         func labelMappingPropertiesForEveryCodePoint(_ start: UInt32) {

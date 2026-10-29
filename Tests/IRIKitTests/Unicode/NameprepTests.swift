@@ -136,7 +136,7 @@ struct NameprepTests {
 
     @Test(
         "Nameprep output never holds a prohibited character, for every single code point.",
-        .tags(.idna)
+        .tags(.idna, .exhaustive)
     )
     func outputIsNeverProhibited() {
         var failures: [UInt32] = []

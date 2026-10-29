@@ -137,29 +137,51 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
-            "Path segment normalization keeps the path when remove_dot_segments would start it with // and there is no authority (RFC 3986 section 3.3).",
+            "Path segment normalization keeps the remove_dot_segments result that begins with // when there is no authority, and compares it as a component (RFC 3986 sections 3.3, 5.2.4 and 6.2.2).",
             .tags(.normalization),
             arguments: [
-                // remove_dot_segments gives "//b" and "//bar". Without an
-                // authority that text would be read as the authority "b" or
-                // "bar", a different IRI, so the path is kept as it is.
+                // remove_dot_segments gives "//b" and "//bar" with no
+                // authority. The IRIs whose text reads that way have the
+                // authority "b" or "bar", so they are different IRIs
+                // (no false positive, RFC 3987 section 5.1).
                 SimpleComparisonCase(lhs: "foo:a/../..//b", rhs: "foo://b", areEqual: false),
                 SimpleComparisonCase(lhs: "example:/.//bar", rhs: "example://bar", areEqual: false),
                 SimpleComparisonCase(lhs: "example:/a/..//bar", rhs: "example://bar", areEqual: false),
-                // Keeping the path can leave two equivalent IRIs unequal, a
-                // false negative that RFC 3987 section 5.1 allows; writing
-                // "//a/b" would be the false positive it rules out.
-                SimpleComparisonCase(lhs: "foo:/.//a/./b", rhs: "foo:/.//a/b", areEqual: false),
+                // Both paths become "//a/b" under 5.2.4, so the IRIs are
+                // equivalent (no false negative).
+                SimpleComparisonCase(lhs: "foo:/.//a/./b", rhs: "foo:/.//a/b", areEqual: true),
+                SimpleComparisonCase(lhs: "foo:a/../..//b", rhs: "foo:/.//b", areEqual: true),
+                SimpleComparisonCase(lhs: "example:/a/..//bar", rhs: "example:/.//bar", areEqual: true),
+                SimpleComparisonCase(lhs: "foo:/.//a/../b?q#f", rhs: "foo:/.//b?q#f", areEqual: true),
+                SimpleComparisonCase(lhs: "foo:/.//a?q", rhs: "foo:/.//a?r", areEqual: false),
             ]
         )
-        func pathThatWouldReadAsAnAuthorityIsKept(_ testCase: SimpleComparisonCase) throws {
-            let iri = try IRI(validating: testCase.lhs)
-            let normalized = try iri.normalized(.pathSegments)
+        func pathThatWouldReadAsAnAuthorityIsComparedAsAComponent(_ testCase: SimpleComparisonCase) throws {
+            let lhs = try IRI(validating: testCase.lhs)
+            let rhs = try IRI(validating: testCase.rhs)
 
-            #expect(normalized == iri)
-            #expect(normalized.authority == nil)
-            #expect(try normalized.normalized(.pathSegments) == normalized)
-            #expect(try iri.isEquivalent(to: IRI(validating: testCase.rhs), under: .syntaxBased) == testCase.areEqual)
+            #expect(try lhs.isEquivalent(to: rhs, under: .syntaxBased) == testCase.areEqual)
+            #expect(try rhs.isEquivalent(to: lhs, under: .syntaxBased) == testCase.areEqual)
+            #expect(try lhs.isEquivalent(to: lhs, under: .syntaxBased))
+            #expect(throws: IRIError.normalFormHasNoText(testCase.lhs)) {
+                try lhs.normalized(.pathSegments)
+            }
+        }
+
+        @Test(
+            "An absolute IRI whose dot-segment result begins with // and has no authority is compared as components.",
+            .tags(.normalization)
+        )
+        func absoluteIRIPathThatWouldReadAsAnAuthorityIsComparedAsAComponent() throws {
+            let lhs = try AbsoluteIRI(validating: "foo:/.//a/./b")
+            let rhs = try AbsoluteIRI(validating: "foo:/.//a/b")
+            let authority = try AbsoluteIRI(validating: "foo://a/b")
+
+            #expect(try lhs.isEquivalent(to: rhs))
+            #expect(try !lhs.isEquivalent(to: authority))
+            #expect(throws: IRIError.normalFormHasNoText("foo:/.//a/./b")) {
+                try lhs.normalized()
+            }
         }
 
         @Test(

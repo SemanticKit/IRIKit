@@ -81,7 +81,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "Normalizing with .characters gives a valid, idempotent IRI for every ucschar and iprivate code point, and percent-encodes only what the component cannot hold.",
-            .tags(.normalization, .unicodeNormalization),
+            .tags(.normalization, .unicodeNormalization, .exhaustive),
             arguments: placements
         )
         func everyCodePointStaysValid(_ placement: Placement) throws {

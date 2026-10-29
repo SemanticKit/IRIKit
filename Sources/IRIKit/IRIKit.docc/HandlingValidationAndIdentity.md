@@ -23,7 +23,8 @@ do {
 ```
 
 ``IRIError`` distinguishes invalid absolute IRIs, invalid references, missing
-template values, and invalid template syntax.
+template values, invalid template syntax, and a normal form that cannot be
+written as IRI text (``IRIError/normalFormHasNoText(_:)``).
 
 ```swift
 let template = try IRITemplate(validating: "https://example.com/{name}")

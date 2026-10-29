@@ -1,10 +1,11 @@
 /// Applies RFC 3987 section 5.3 normalization to validated IRI components.
 enum IRINormalizer {
-    static func normalizedString(
+    /// Returns the normalized components.
+    static func normalizedComponents(
         of components: ParsedIRIComponents,
         original: String,
         normalization: IRINormalization
-    ) throws -> String {
+    ) throws -> NormalizedIRIComponents {
         var scheme = components.scheme
         var authority = components.authority.map(IRIAuthorityParts.init)
         var path = components.path
@@ -47,17 +48,7 @@ enum IRINormalizer {
         }
 
         if normalization.contains(.pathSegments) {
-            let candidate = removingDotSegments(from: path)
-            // RFC 3986 section 3.3: when there is no authority, a path cannot
-            // begin with "//", because the text would then be read as an
-            // authority. remove_dot_segments can produce such a path (for
-            // example from "/.//a"); the recomposed text would name a
-            // different IRI, and RFC 3987 section 5.1 requires that
-            // comparison never produce such a false positive, so the path
-            // keeps its dot segments in that case.
-            if authority != nil || !candidate.unicodeScalars.starts(with: "//".unicodeScalars) {
-                path = candidate
-            }
+            path = removingDotSegments(from: path)
         }
 
         if normalization.contains(.scheme), let rule = IRISchemeNormalizationRule(scheme: scheme) {
@@ -84,18 +75,13 @@ enum IRINormalizer {
             }
         }
 
-        var result = scheme + ":"
-        if let authority {
-            result += "//" + authority.string
-        }
-        result += path
-        if let query {
-            result += "?" + query
-        }
-        if let fragment {
-            result += "#" + fragment
-        }
-        return result
+        return NormalizedIRIComponents(
+            scheme: scheme,
+            authority: authority?.string,
+            path: path,
+            query: query,
+            fragment: fragment
+        )
     }
 
     // MARK: - Case normalization

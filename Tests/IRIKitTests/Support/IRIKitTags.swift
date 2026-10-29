@@ -15,3 +15,11 @@ extension Tag {
     /// Tests of IDNA ToASCII and ToUnicode (RFC 3490) and Nameprep (RFC 3491).
     @Tag static var idna: Self
 }
+
+extension Tag {
+    /// Tests that sweep every code point. They are the proofs for the label
+    /// mapping and table properties and the slowest tests in the package.
+    /// The tag marks them in test reports and in Xcode's test navigator; the
+    /// full suite always runs them.
+    @Tag static var exhaustive: Self
+}
