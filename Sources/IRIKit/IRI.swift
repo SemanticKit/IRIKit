@@ -80,9 +80,11 @@ extension IRI: Codable {}
 
 extension IRI: Comparable {
     /// Returns whether the left IRI sorts before the right IRI by simple
-    /// string comparison.
+    /// string comparison: the lexicographic order of Unicode scalar values,
+    /// the same sequences `==` compares, so two values that are not equal
+    /// never tie.
     public static func < (lhs: IRI, rhs: IRI) -> Bool {
-        lhs.rawValue < rhs.rawValue
+        lhs.rawValue.unicodeScalars.lexicographicallyPrecedes(rhs.rawValue.unicodeScalars)
     }
 }
 

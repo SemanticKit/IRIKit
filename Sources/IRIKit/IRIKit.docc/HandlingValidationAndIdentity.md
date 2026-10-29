@@ -6,8 +6,9 @@ character sequences.
 ## Overview
 
 IRIKit validates syntax when a value is created. Once construction succeeds, the
-stored text is the value's identity. The library does not perform
-scheme-specific lookup, network access, or application-level resolution.
+stored text is the value's identity. Normalization returns a new value and
+never changes the stored text. The library does not perform network access or
+application-level resolution.
 
 ## Report Validation Failures
 
@@ -22,7 +23,8 @@ do {
 ```
 
 ``IRIError`` distinguishes invalid absolute IRIs, invalid references, missing
-template values, and invalid template syntax.
+template values, invalid template syntax, and a normal form that cannot be
+written as IRI text (``IRIError/normalFormHasNoText(_:)``).
 
 ```swift
 let template = try IRITemplate(validating: "https://example.com/{name}")
@@ -70,6 +72,22 @@ let names: Set<IRI> = [
 
 names.count
 // 1
+```
+
+Equality is simple string comparison, so `http://example.org/%7Euser` and
+`http://example.org/~user` are different values. To compare spelling
+variants of the same identifier, compare normal forms instead; see
+<doc:ComparingAndNormalizingIRIs>.
+
+```swift
+let encoded = try IRI(validating: "http://example.org/%7Euser")
+let plain = try IRI(validating: "http://example.org/~user")
+
+encoded == plain
+// false
+
+try encoded.isEquivalent(to: plain)
+// true
 ```
 
 ## Preserve IRI Text

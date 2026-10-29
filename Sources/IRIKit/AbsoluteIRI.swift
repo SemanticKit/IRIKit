@@ -64,9 +64,11 @@ extension AbsoluteIRI: Codable {}
 
 extension AbsoluteIRI: Comparable {
     /// Returns whether the left absolute IRI sorts before the right absolute
-    /// IRI by simple string comparison.
+    /// IRI by simple string comparison: the
+    /// lexicographic order of Unicode scalar values, the same sequences `==`
+    /// compares, so two values that are not equal never tie.
     public static func < (lhs: AbsoluteIRI, rhs: AbsoluteIRI) -> Bool {
-        lhs.rawValue < rhs.rawValue
+        lhs.rawValue.unicodeScalars.lexicographicallyPrecedes(rhs.rawValue.unicodeScalars)
     }
 }
 

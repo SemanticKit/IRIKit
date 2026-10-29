@@ -6,6 +6,7 @@ extension RFC3987ComplianceTests {
     struct Section2AuthorityTests {
         @Test(
             "iauthority = [ iuserinfo '@' ] ihost [ ':' port ]",
+            .tags(.parsing),
             arguments: [
                 AbsoluteIRICase(
                     iri: "https://user:pass@example.com:8080/path",
@@ -61,6 +62,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "IP-literal = '[' ( IPv6address / IPvFuture ) ']'",
+            .tags(.parsing),
             arguments: [
                 "https://[2001:db8::7/path",
                 "https://2001:db8::7]/path",
@@ -76,22 +78,28 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
-            "IPv4address = dec-octet '.' dec-octet '.' dec-octet '.' dec-octet",
+            "A host that does not match IPv4address is an ireg-name (RFC 3986 section 3.2.2).",
+            .tags(.parsing),
             arguments: [
                 "https://256.0.0.1/path",
                 "https://192.168.0/path",
                 "https://192.168.0.1.2/path",
                 "https://01.2.3.4/path",
+                "http://1.2.3/",
+                "http://999.1.1.1/",
+                "http://127.0.0.01/",
             ]
         )
-        func rejectsInvalidIPv4Authorities(_ iri: String) {
-            #expect(throws: IRIError.invalidIRI(iri)) {
-                try IRI(validating: iri)
-            }
+        func acceptsDigitsAndDotsThatAreNotIPv4AsRegisteredNames(_ iriString: String) throws {
+            let iri = try IRI(validating: iriString)
+
+            #expect(iri.rawValue == iriString)
+            #expect(try AbsoluteIRI(validating: iriString).rawValue == iriString)
         }
 
         @Test(
             "port = *DIGIT",
+            .tags(.parsing),
             arguments: [
                 "https://example.com:port/path",
                 "https://example.com:80x/path",
