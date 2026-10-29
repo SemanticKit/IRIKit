@@ -63,6 +63,18 @@ extension RFC3987ComplianceTests {
             }
         }
 
+        @Test(
+            "ws, wss and ftp IRIs also require a host, as RFC 6455 section 3 and RFC 1738 section 5 do.",
+            arguments: ["ws:/chat", "wss://:443/chat", "ftp:/pub", "ftp://user@/pub"]
+        )
+        func requiresHostForWebSocketAndFTP(_ string: String) throws {
+            let iri = try IRI(validating: string)
+
+            #expect(throws: IRIError.invalidIRI(string)) {
+                _ = try iri.normalized(.syntaxAndSchemeBased)
+            }
+        }
+
         @Test("Without scheme-based normalization an HTTP IRI without a host still normalizes.")
         func lenientNormalizationAllowsMissingHost() throws {
             let iri = try IRI(validating: "HTTPS:/a/../relative")
@@ -94,17 +106,22 @@ extension RFC3987ComplianceTests {
             #expect(try iri.normalized(.syntaxAndSchemeBased).rawValue == "\(scheme)://example.org/")
         }
 
-        // Deliberate extension beyond URIKit: URIKit dropped default ports
-        // and required a host only for http and https. IRIKit applies the
-        // same rules to ws (80) and wss (443) under RFC 6455 and to ftp (21)
-        // under RFC 1738.
+        // URIKit dropped default ports and required a host only for http and
+        // https. The ws and wss defaults come from RFC 6455 section 3 ("the
+        // default for "ws" is port 80, while the default for "wss" is port
+        // 443") and the ftp default from RFC 1738 section 3.2 ("If :<port> is
+        // omitted, the port defaults to 21").
         @Test(
-            "Default ports are also removed for ws, wss and ftp, beyond what URIKit did.",
+            "Default ports are also removed for ws and wss (RFC 6455 section 3) and ftp (RFC 1738 section 3.2), beyond what URIKit did.",
             arguments: [
                 NormalizationCase("ws://example.org:80/", .syntaxAndSchemeBased, expected: "ws://example.org/"),
                 NormalizationCase("wss://example.org:443/", .syntaxAndSchemeBased, expected: "wss://example.org/"),
                 NormalizationCase("ftp://example.org:21/", .syntaxAndSchemeBased, expected: "ftp://example.org/"),
                 NormalizationCase("ws://example.org:443/", .syntaxAndSchemeBased, expected: "ws://example.org:443/"),
+                NormalizationCase("wss://example.org:80/", .syntaxAndSchemeBased, expected: "wss://example.org:80/"),
+                NormalizationCase("ftp://example.org:80/", .syntaxAndSchemeBased, expected: "ftp://example.org:80/"),
+                NormalizationCase("ws://example.org:/", .syntaxAndSchemeBased, expected: "ws://example.org/"),
+                NormalizationCase("ftp://example.org", .syntaxAndSchemeBased, expected: "ftp://example.org/"),
             ]
         )
         func removesDefaultPortsBeyondURIKit(_ testCase: NormalizationCase) throws {

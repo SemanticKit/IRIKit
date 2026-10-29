@@ -78,9 +78,20 @@ try IRI(validating: "HTTP://Example.com/a/../b").normalized(.letterCase).rawValu
 ## Normalize for a Scheme
 
 Add ``IRINormalization/scheme`` when the scheme's own rules should apply.
-IRIKit knows the rules for `http`, `https`, `ws`, `wss`, and `ftp`: the
-default port and an empty port are removed, an empty path becomes `/`, and
-a host is required.
+IRIKit applies scheme-based normalization only to the schemes whose
+specifications define a default port, an empty path that is equivalent to
+`/`, and a required host:
+
+| Scheme | Default port | Empty path | Specification |
+| --- | --- | --- | --- |
+| `http` | 80 | `/` | RFC 9110 section 4.2.1 (port, host required) and section 4.2.3 (normalization) |
+| `https` | 443 | `/` | RFC 9110 section 4.2.2 (port, host required) and section 4.2.3 (normalization) |
+| `ws` | 80 | `/` | RFC 6455 section 3: the port "is OPTIONAL; the default for "ws" is port 80", and the resource name is "/" if the path component is empty |
+| `wss` | 443 | `/` | RFC 6455 section 3: "the default for "wss" is port 443" |
+| `ftp` | 21 | `/` | RFC 1738 section 3.2: "If :<port> is omitted, the port defaults to 21"; section 3.1: the "/" between host and url-path is not part of the url-path, so an empty path and `/` give the same url-path; section 5: `ftpurl` requires a `hostport` |
+
+For these schemes the default port and an empty port are removed, an empty
+path becomes `/`, and a host is required.
 
 ```swift
 let forms = ["http://example.com", "http://example.com:/", "http://example.com:80/"]
