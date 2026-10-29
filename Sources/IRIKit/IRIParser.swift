@@ -196,13 +196,12 @@ enum IRIParser {
         }
     }
 
+    /// Checks `IPv4address / ireg-name` (RFC 3987 section 2.2). As RFC 3986
+    /// section 3.2.2 says, a host that matches `IPv4address` is an IPv4
+    /// literal; any other host is a registered name, so text such as
+    /// `1.2.3`, `999.1.1.1` or `127.0.0.01` is a valid `ireg-name`.
     private static func validateRegisteredOrIPv4Host(_ host: Scalars, authority: String) throws {
-        if host.contains("."),
-            host.allSatisfy({ isDigit($0) || $0 == "." })
-        {
-            guard isValidIPv4Address(host) else {
-                throw IRIError.invalidIRIReference(authority)
-            }
+        if isValidIPv4Address(host) {
             return
         }
 
@@ -215,7 +214,8 @@ enum IRIParser {
     }
 
     private static func isValidIPvFuture(_ literal: Scalars) -> Bool {
-        guard literal.first == "v" else {
+        // RFC 5234 section 2.3: the ABNF literal "v" matches "v" or "V".
+        guard literal.first == "v" || literal.first == "V" else {
             return false
         }
 

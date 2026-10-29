@@ -6,7 +6,7 @@ extension RFC3987ComplianceTests {
     /// `LegacyXMLIRICompatibility`, stated in RFC 3987 terms.
     @Suite("Section 5.3 normalization of former URIKit cases", .tags(.normalization, .uriKitParity))
     struct Section5URIKitParityTests {
-        @Test("Strict normalization canonicalizes scheme, host, path, and default port.")
+        @Test("Strict normalization canonicalizes scheme, host, path, and default port.", .tags(.normalization, .uriKitParity))
         func canonicalizesSchemeHostPathAndDefaultPort() throws {
             let iri = try IRI(validating: "HTTPS://BÜCHER.Example:443/a/./b/../c")
             let normalized = try iri.normalized(.syntaxAndSchemeBased)
@@ -23,6 +23,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "Whitespace is not allowed in an IRI.",
+            .tags(.normalization, .uriKitParity),
             arguments: [
                 "https://example.org/with space",
                 " https://example.org/",
@@ -40,21 +41,21 @@ extension RFC3987ComplianceTests {
             }
         }
 
-        @Test("Empty input is not an IRI.", arguments: ["", "  \n \t  "])
+        @Test("Empty input is not an IRI.", .tags(.normalization, .uriKitParity), arguments: ["", "  \n \t  "])
         func rejectsEmptyInput(_ string: String) {
             #expect(throws: IRIError.invalidIRI(string)) {
                 _ = try IRI(validating: string)
             }
         }
 
-        @Test("Text without a scheme is not an absolute IRI.")
+        @Test("Text without a scheme is not an absolute IRI.", .tags(.normalization, .uriKitParity))
         func rejectsMissingScheme() {
             #expect(throws: IRIError.invalidIRI("//example.org/a")) {
                 _ = try IRI(validating: "//example.org/a")
             }
         }
 
-        @Test("HTTP-family IRIs require a host under scheme-based normalization.")
+        @Test("HTTP-family IRIs require a host under scheme-based normalization.", .tags(.normalization, .uriKitParity))
         func requiresAuthorityForHTTPFamily() throws {
             let iri = try IRI(validating: "https:/relative")
 
@@ -65,6 +66,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "ws, wss and ftp IRIs also require a host, as RFC 6455 section 3 and RFC 1738 section 5 do.",
+            .tags(.normalization, .uriKitParity),
             arguments: ["ws:/chat", "wss://:443/chat", "ftp:/pub", "ftp://user@/pub"]
         )
         func requiresHostForWebSocketAndFTP(_ string: String) throws {
@@ -75,21 +77,21 @@ extension RFC3987ComplianceTests {
             }
         }
 
-        @Test("Without scheme-based normalization an HTTP IRI without a host still normalizes.")
+        @Test("Without scheme-based normalization an HTTP IRI without a host still normalizes.", .tags(.normalization, .uriKitParity))
         func lenientNormalizationAllowsMissingHost() throws {
             let iri = try IRI(validating: "HTTPS:/a/../relative")
 
             #expect(try iri.normalized(.syntaxBased).rawValue == "https:/relative")
         }
 
-        @Test("Authority-free URNs are allowed and keep their case-sensitive parts.")
+        @Test("Authority-free URNs are allowed and keep their case-sensitive parts.", .tags(.normalization, .uriKitParity))
         func allowsAuthorityFreeURN() throws {
             let iri = try IRI(validating: "URN:example:Animal:ferret:nose")
 
             #expect(try iri.normalized(.syntaxAndSchemeBased).rawValue == "urn:example:Animal:ferret:nose")
         }
 
-        @Test("Hosts are lowercased for every scheme that uses the generic authority syntax.")
+        @Test("Hosts are lowercased for every scheme that uses the generic authority syntax.", .tags(.normalization, .uriKitParity))
         func lowercasesHostForAnyScheme() throws {
             let iri = try IRI(validating: "Custom://Example.ORG/Path")
 
@@ -98,6 +100,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "Authority schemes normalize an empty path to '/'.",
+            .tags(.normalization, .uriKitParity),
             arguments: ["http", "https", "ftp", "ws", "wss"]
         )
         func authoritySchemesUseRootPath(_ scheme: String) throws {
@@ -113,6 +116,7 @@ extension RFC3987ComplianceTests {
         // omitted, the port defaults to 21").
         @Test(
             "Default ports are also removed for ws and wss (RFC 6455 section 3) and ftp (RFC 1738 section 3.2), beyond what URIKit did.",
+            .tags(.normalization, .uriKitParity),
             arguments: [
                 NormalizationCase("ws://example.org:80/", .syntaxAndSchemeBased, expected: "ws://example.org/"),
                 NormalizationCase("wss://example.org:443/", .syntaxAndSchemeBased, expected: "wss://example.org/"),
@@ -128,7 +132,7 @@ extension RFC3987ComplianceTests {
             #expect(try IRI(validating: testCase.input).normalized(testCase.normalization).rawValue == testCase.expected)
         }
 
-        @Test("Only the scheme's own default port is removed.")
+        @Test("Only the scheme's own default port is removed.", .tags(.normalization, .uriKitParity))
         func removesOnlyMatchingDefaultPort() throws {
             #expect(try IRI(validating: "http://example.org:80/").normalized(.syntaxAndSchemeBased).rawValue == "http://example.org/")
             #expect(try IRI(validating: "https://example.org:443/").normalized(.syntaxAndSchemeBased).rawValue == "https://example.org/")
@@ -138,6 +142,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "Dot segments are removed, a trailing slash is kept, and empty segments are kept as RFC 3986 section 5.2.4 requires.",
+            .tags(.normalization, .uriKitParity),
             arguments: [
                 NormalizationCase("https://example.org/a/b/../c/", expected: "https://example.org/a/c/"),
                 NormalizationCase("https://example.org/..", expected: "https://example.org/"),
@@ -151,7 +156,7 @@ extension RFC3987ComplianceTests {
             #expect(try IRI(validating: testCase.input).normalized(testCase.normalization).rawValue == testCase.expected)
         }
 
-        @Test("Legacy XML identifier text is not an IRI until the XML layer has decoded it.")
+        @Test("Legacy XML identifier text is not an IRI until the XML layer has decoded it.", .tags(.normalization, .uriKitParity))
         func legacyXMLTextIsNotAnIRI() {
             let legacy = "HTTPS://Example.org\\folder\\file name?a=1&amp;b=2"
 
@@ -160,7 +165,7 @@ extension RFC3987ComplianceTests {
             }
         }
 
-        @Test("An XML identifier decoded by its format normalizes like any other IRI.")
+        @Test("An XML identifier decoded by its format normalizes like any other IRI.", .tags(.normalization, .uriKitParity))
         func decodedXMLIdentifierNormalizes() throws {
             // RFC 3987 section 5.2: format escaping such as XML entities is
             // resolved by the format before comparison. The decoded text is

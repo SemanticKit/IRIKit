@@ -5,7 +5,7 @@ import Testing
 extension RFC3987ComplianceTests {
     @Suite("Section 5.3.2.2 character normalization")
     struct Section5CharacterNormalizationTests {
-        @Test("Creators should use NFC for newly created IRIs.")
+        @Test("Creators should use NFC for newly created IRIs.", .tags(.normalization))
         func exactIdentityPreservesCreatorNormalizationChoice() throws {
             let nfc = try IRI(validating: "http://www.example.org/résumé.html")
             let decomposed = try IRI(validating: "http://www.example.org/re\u{301}sume\u{301}.html")
@@ -13,7 +13,7 @@ extension RFC3987ComplianceTests {
             #expect(nfc != decomposed)
         }
 
-        @Test("Arbitrary third-party Unicode normalization is not allowed for comparison.")
+        @Test("Arbitrary third-party Unicode normalization is not allowed for comparison.", .tags(.normalization))
         func simpleComparisonDoesNotApplyUnicodeNormalization() throws {
             let nfc = try IRI(validating: "http://www.example.org/résumé.html")
             let decomposed = try IRI(validating: "http://www.example.org/re\u{301}sume\u{301}.html")
@@ -21,7 +21,7 @@ extension RFC3987ComplianceTests {
             #expect(nfc != decomposed)
         }
 
-        @Test("Unicode-input IRI-to-URI mapping does not normalize before percent-encoding.")
+        @Test("Unicode-input IRI-to-URI mapping does not normalize before percent-encoding.", .tags(.normalization))
         func mapsDecomposedUnicodeWithoutNormalization() throws {
             let iri = try IRI(validating: "http://www.example.org/re\u{301}sume\u{301}.html")
 

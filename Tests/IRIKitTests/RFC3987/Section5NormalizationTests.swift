@@ -4,7 +4,7 @@ import Testing
 extension RFC3987ComplianceTests {
     @Suite("Section 5.3.2 syntax-based normalization")
     struct Section5NormalizationTests {
-        @Test("Simple string comparison MUST NOT map IRIs to URIs.")
+        @Test("Simple string comparison MUST NOT map IRIs to URIs.", .tags(.normalization))
         func simpleStringComparisonDoesNotMapToURI() throws {
             let iri = try IRI(validating: "https://example.com/rosé")
             let uriForm = try IRI(validating: "https://example.com/ros%C3%A9")
@@ -12,7 +12,7 @@ extension RFC3987ComplianceTests {
             #expect(iri != uriForm)
         }
 
-        @Test("Syntax-based normalization uppercases percent-encoding hex digits.")
+        @Test("Syntax-based normalization uppercases percent-encoding hex digits.", .tags(.normalization))
         func exactIdentityPreservesPercentEncodingCase() throws {
             let lowercase = try IRI(validating: "https://example.com/%3a")
             let uppercase = try IRI(validating: "https://example.com/%3A")
@@ -21,7 +21,7 @@ extension RFC3987ComplianceTests {
             #expect(try lowercase.normalized(.syntaxBased) == uppercase)
         }
 
-        @Test("Syntax-based normalization lowercases scheme and ASCII-only host.")
+        @Test("Syntax-based normalization lowercases scheme and ASCII-only host.", .tags(.normalization))
         func exactIdentityPreservesSchemeAndHostCase() throws {
             let mixed = try IRI(validating: "HTTP://www.EXAMPLE.com/")
             let lower = try IRI(validating: "http://www.example.com/")
@@ -30,7 +30,27 @@ extension RFC3987ComplianceTests {
             #expect(try mixed.normalized(.syntaxBased) == lower)
         }
 
-        @Test("Syntax-based normalization decodes percent-encoded unreserved characters.")
+        @Test(
+            "A percent-encoded host that decodes to digits and dots normalizes to that ireg-name.",
+            .tags(.normalization),
+            arguments: [
+                NormalizationCase("http://%31.2.3/", .syntaxBased, expected: "http://1.2.3/"),
+                NormalizationCase("http://%31.2.3/", .syntaxAndSchemeBased, expected: "http://1.2.3/"),
+                NormalizationCase("http://%39%39%39.1.1.1/", .syntaxBased, expected: "http://999.1.1.1/"),
+                NormalizationCase("http://127.0.0.0%31/", .syntaxAndSchemeBased, expected: "http://127.0.0.01/"),
+            ]
+        )
+        func normalizesPercentEncodedDigitsAndDotsHost(_ testCase: NormalizationCase) throws {
+            let iri = try IRI(validating: testCase.input)
+            let normalized = try iri.normalized(testCase.normalization)
+
+            #expect(normalized.rawValue == testCase.expected)
+            #expect(try IRI(validating: testCase.expected).rawValue == testCase.expected)
+            #expect(try iri.isEquivalent(to: IRI(validating: testCase.expected), under: testCase.normalization))
+            #expect(try AbsoluteIRI(validating: testCase.input).normalized(testCase.normalization).rawValue == testCase.expected)
+        }
+
+        @Test("Syntax-based normalization decodes percent-encoded unreserved characters.", .tags(.normalization))
         func exactIdentityPreservesPercentEncodedUnreservedCharacters() throws {
             let encoded = try IRI(validating: "http://example.org/%7Euser")
             let decoded = try IRI(validating: "http://example.org/~user")
@@ -39,7 +59,7 @@ extension RFC3987ComplianceTests {
             #expect(try encoded.normalized(.syntaxBased) == decoded)
         }
 
-        @Test("Syntax-based normalization removes dot-segments from paths.")
+        @Test("Syntax-based normalization removes dot-segments from paths.", .tags(.normalization))
         func exactIdentityPreservesDotSegments() throws {
             let dotted = try IRI(validating: "http://example.org/a/../b")
             let normalized = try IRI(validating: "http://example.org/b")

@@ -6,6 +6,7 @@ extension RFC3987ComplianceTests {
     struct Section5SimpleStringComparisonTests {
         @Test(
             "Simple string comparison compares the IRI character sequences for exact equality.",
+            .tags(.comparison),
             arguments: [
                 SimpleComparisonCase(
                     lhs: "https://example.com/é",
@@ -28,6 +29,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "Simple string comparison can be used to order exact IRI character sequences.",
+            .tags(.comparison),
             arguments: [
                 OrderedComparisonCase(
                     lower: "https://example.com/a",

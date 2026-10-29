@@ -9,6 +9,14 @@ extension Tag {
 }
 
 extension Tag {
+    /// Tests of IRI syntax and parsing (RFC 3987 section 2).
+    @Tag static var parsing: Self
+
+    /// Tests of IRI comparison and ordering (RFC 3987 section 5).
+    @Tag static var comparison: Self
+}
+
+extension Tag {
     /// Tests of the Unicode Normalization Forms (UAX #15).
     @Tag static var unicodeNormalization: Self
 

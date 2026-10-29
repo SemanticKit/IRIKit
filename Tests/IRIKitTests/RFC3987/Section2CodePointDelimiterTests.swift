@@ -22,6 +22,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "A combining mark after //, /, ?, # or @ does not join with the delimiter.",
+            .tags(.parsing),
             arguments: [
                 ComponentCase(
                     input: "http://\u{301}example.org/", authority: "\u{301}example.org", path: "/", query: nil, fragment: nil
@@ -68,6 +69,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "A combining mark after the port delimiter is not a port digit.",
+            .tags(.parsing),
             arguments: [
                 "http://example.org:\u{301}/",
                 "http://example.org:80\u{301}/",
@@ -82,6 +84,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "DIGIT and HEXDIG are US-ASCII (RFC 5234 appendix B.1), so other digits are not port digits or percent-encoding digits.",
+            .tags(.parsing),
             arguments: [
                 "http://example.org:\u{661}\u{662}/",
                 "http://example.org:\u{FF18}\u{FF10}/",
@@ -96,14 +99,14 @@ extension RFC3987ComplianceTests {
             }
         }
 
-        @Test("A host of non-ASCII digits is a registered name, not an IPv4 address.")
+        @Test("A host of non-ASCII digits is a registered name, not an IPv4 address.", .tags(.parsing))
         func nonASCIIDigitHostIsARegisteredName() throws {
             let iri = try IRI(validating: "http://\u{661}.\u{662}.\u{663}.\u{664}/")
 
             #expect(iri.authority == "\u{661}.\u{662}.\u{663}.\u{664}")
         }
 
-        @Test("IPvFuture addresses hold only US-ASCII unreserved characters, sub-delims and ':' (RFC 3986 section 3.2.2).")
+        @Test("IPvFuture addresses hold only US-ASCII unreserved characters, sub-delims and ':' (RFC 3986 section 3.2.2).", .tags(.parsing))
         func ipvFutureIsASCII() {
             let iriString = "http://[v1.\u{E9}]/"
 

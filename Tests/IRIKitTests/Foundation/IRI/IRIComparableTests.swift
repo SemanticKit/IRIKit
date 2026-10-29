@@ -3,7 +3,7 @@ import Testing
 
 @Suite("IRI Comparable coverage")
 struct IRIComparableTests {
-    @Test("IRI provides Comparable using simple string ordering.")
+    @Test("IRI provides Comparable using simple string ordering.", .tags(.comparison))
     func sortsBySimpleStringOrdering() throws {
         let values = [
             try IRI(validating: "https://example.com/b"),
@@ -17,7 +17,7 @@ struct IRIComparableTests {
         ])
     }
 
-    @Test("IRI orders canonically equivalent but unequal values by Unicode scalar value, consistent with ==.")
+    @Test("IRI orders canonically equivalent but unequal values by Unicode scalar value, consistent with ==.", .tags(.comparison))
     func ordersCanonicallyEquivalentValuesApart() throws {
         let composed = try IRI(validating: "http://example.org/r\u{E9}sum\u{E9}")
         let decomposed = try IRI(validating: "http://example.org/re\u{301}sume\u{301}")
