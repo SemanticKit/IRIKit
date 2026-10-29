@@ -18,6 +18,7 @@ extension RFC3987ComplianceTests {
             let uppercase = try IRI(validating: "https://example.com/%3A")
 
             #expect(lowercase != uppercase)
+            #expect(try lowercase.normalized(.syntaxBased) == uppercase)
         }
 
         @Test("Syntax-based normalization lowercases scheme and ASCII-only host.")
@@ -26,6 +27,7 @@ extension RFC3987ComplianceTests {
             let lower = try IRI(validating: "http://www.example.com/")
 
             #expect(mixed != lower)
+            #expect(try mixed.normalized(.syntaxBased) == lower)
         }
 
         @Test("Syntax-based normalization decodes percent-encoded unreserved characters.")
@@ -34,6 +36,7 @@ extension RFC3987ComplianceTests {
             let decoded = try IRI(validating: "http://example.org/~user")
 
             #expect(encoded != decoded)
+            #expect(try encoded.normalized(.syntaxBased) == decoded)
         }
 
         @Test("Syntax-based normalization removes dot-segments from paths.")
@@ -42,6 +45,7 @@ extension RFC3987ComplianceTests {
             let normalized = try IRI(validating: "http://example.org/b")
 
             #expect(dotted != normalized)
+            #expect(try dotted.normalized(.syntaxBased) == normalized)
         }
 
         @Test(

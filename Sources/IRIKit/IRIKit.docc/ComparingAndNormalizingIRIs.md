@@ -109,6 +109,10 @@ try unicode.isEquivalent(to: ace, under: .syntaxAndSchemeBased)
 ```
 
 Each host label is lowercased and mapped to Unicode Normalization Form KC.
+Because Form KC can itself produce uppercase letters, as when `ℌ` becomes
+`H`, the mapping repeats until the label stops changing. `http://ℌ.example/`
+therefore normalizes to `http://h.example/`, and normalizing again changes
+nothing.
 A label keeps its original characters when the mapping would add a percent
 sign or a label separator, so `www.google⒈com` is not equivalent to
 `www.google1.com` and an ideographic full stop does not split a label. These

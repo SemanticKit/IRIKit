@@ -94,6 +94,23 @@ extension RFC3987ComplianceTests {
             #expect(try iri.normalized(.syntaxAndSchemeBased).rawValue == "\(scheme)://example.org/")
         }
 
+        // Deliberate extension beyond URIKit: URIKit dropped default ports
+        // and required a host only for http and https. IRIKit applies the
+        // same rules to ws (80) and wss (443) under RFC 6455 and to ftp (21)
+        // under RFC 1738.
+        @Test(
+            "Default ports are also removed for ws, wss and ftp, beyond what URIKit did.",
+            arguments: [
+                NormalizationCase("ws://example.org:80/", .syntaxAndSchemeBased, expected: "ws://example.org/"),
+                NormalizationCase("wss://example.org:443/", .syntaxAndSchemeBased, expected: "wss://example.org/"),
+                NormalizationCase("ftp://example.org:21/", .syntaxAndSchemeBased, expected: "ftp://example.org/"),
+                NormalizationCase("ws://example.org:443/", .syntaxAndSchemeBased, expected: "ws://example.org:443/"),
+            ]
+        )
+        func removesDefaultPortsBeyondURIKit(_ testCase: NormalizationCase) throws {
+            #expect(try IRI(validating: testCase.input).normalized(testCase.normalization).rawValue == testCase.expected)
+        }
+
         @Test("Only the scheme's own default port is removed.")
         func removesOnlyMatchingDefaultPort() throws {
             #expect(try IRI(validating: "http://example.org:80/").normalized(.syntaxAndSchemeBased).rawValue == "http://example.org/")

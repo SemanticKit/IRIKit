@@ -274,7 +274,31 @@ enum IRINormalizer {
             .joined(separator: ".")
     }
 
+    /// Maps a label to its normal form.
+    ///
+    /// One pass is not always a fixed point: NFKC can produce uppercase
+    /// ASCII (U+210C BLACK-LETTER CAPITAL H gives `H`, U+1D400
+    /// MATHEMATICAL BOLD CAPITAL A gives `A`), and it can produce an ACE
+    /// prefix from fullwidth text. Nameprep (RFC 3491) folds such output to
+    /// lowercase, so the step repeats until its output stops changing,
+    /// which keeps the normal form idempotent. Every step refuses a mapping
+    /// that adds a label separator or percent sign, so the bound only
+    /// guards against a non-converging input.
     private static func domainLabelNormalized(_ label: String) -> String {
+        var current = label
+        for _ in 0..<maximumLabelMappingPasses {
+            let next = domainLabelNormalizationStep(current)
+            if next == current {
+                return next
+            }
+            current = next
+        }
+        return current
+    }
+
+    private static let maximumLabelMappingPasses = 8
+
+    private static func domainLabelNormalizationStep(_ label: String) -> String {
         var unicodeLabel = label
         let lowercasedLabel = asciiLowercased(label)
         // IDNA ToUnicode (RFC 3490 section 4.2): a label is only replaced

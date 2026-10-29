@@ -55,6 +55,8 @@ extension RFC3987ComplianceTests {
             let ace = try IRI(validating: "http://xn--rsum-bpad.example.org")
 
             #expect(unicode != ace)
+            #expect(try !unicode.isEquivalent(to: ace, under: .syntaxBased))
+            #expect(try unicode.isEquivalent(to: ace, under: .syntaxAndSchemeBased))
         }
 
         @Test("IDN scheme-based normalization validates IDNs with ToASCII and Nameprep but keeps legible IRI form.")
@@ -62,6 +64,7 @@ extension RFC3987ComplianceTests {
             let iri = try IRI(validating: "http://résumé.example.org")
 
             #expect(iri.authority == "résumé.example.org")
+            #expect(try iri.normalized(.syntaxAndSchemeBased).authority == "résumé.example.org")
         }
 
         @Test("Scheme-based normalization may consider IDN components and punycode conversions equivalent.")
@@ -70,6 +73,7 @@ extension RFC3987ComplianceTests {
             let punycode = try IRI(validating: "http://xn--rsum-bpad.example.org")
 
             #expect(URL(unicode).absoluteString != URL(punycode).absoluteString)
+            #expect(try unicode.isEquivalent(to: punycode, under: .syntaxAndSchemeBased))
         }
 
         @Test("Protocol-based normalization requires protocol evidence such as redirects.")
@@ -210,6 +214,25 @@ extension RFC3987ComplianceTests {
             let iri = try IRI(validating: testCase.input)
 
             #expect(try iri.normalized(testCase.normalization).rawValue == testCase.expected)
+        }
+
+        @Test(
+            "IDN host mapping case-folds NFKC output to a lowercase fixed point (RFC 3491 B.2 and NFKC).",
+            .tags(.normalization),
+            arguments: [
+                NormalizationCase("http://\u{210C}.example/", .syntaxAndSchemeBased, expected: "http://h.example/"),
+                NormalizationCase("http://\u{1D400}.example/", .syntaxAndSchemeBased, expected: "http://a.example/"),
+                NormalizationCase("http://\u{1D400}\u{210C}\u{FF22}.example/", .syntaxAndSchemeBased, expected: "http://ahb.example/"),
+            ]
+        )
+        func compatibilityMappedUppercaseIsFolded(_ testCase: NormalizationCase) throws {
+            let iri = try IRI(validating: testCase.input)
+            let normalized = try iri.normalized(testCase.normalization)
+            let ascii = try IRI(validating: testCase.expected)
+
+            #expect(normalized.rawValue == testCase.expected)
+            #expect(try normalized.normalized(testCase.normalization) == normalized)
+            #expect(try iri.isEquivalent(to: ascii, under: testCase.normalization))
         }
 
         @Test(
