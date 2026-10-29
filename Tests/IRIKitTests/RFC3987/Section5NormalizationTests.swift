@@ -137,49 +137,29 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
-            "Path segment normalization writes a remove_dot_segments output that begins with // after a /. segment when there is no authority (RFC 3986 section 3.3).",
+            "Path segment normalization keeps the path when remove_dot_segments would start it with // and there is no authority (RFC 3986 section 3.3).",
             .tags(.normalization),
             arguments: [
-                // remove_dot_segments gives "//b", "//bar" and "//a/b". Without
-                // an authority that text would read as the authority "b",
-                // "bar" or "a", a different IRI, so "/." comes first.
-                NormalizationCase("foo:a/../..//b", .pathSegments, expected: "foo:/.//b"),
-                NormalizationCase("example:/.//bar", .pathSegments, expected: "example:/.//bar"),
-                NormalizationCase("example:/a/..//bar", .pathSegments, expected: "example:/.//bar"),
-                NormalizationCase("foo:/.//a/./b", .pathSegments, expected: "foo:/.//a/b"),
-                NormalizationCase("foo:/.//a/b", .pathSegments, expected: "foo:/.//a/b"),
-                NormalizationCase("foo:/./././/a", .pathSegments, expected: "foo:/.//a"),
-                NormalizationCase("foo:/.//a?q#f", .syntaxBased, expected: "foo:/.//a?q#f"),
-                // With an authority the output is written as it is.
-                NormalizationCase("foo://h/.//a", .pathSegments, expected: "foo://h//a"),
-            ]
-        )
-        func pathThatWouldReadAsAnAuthorityGetsADotSegment(_ testCase: NormalizationCase) throws {
-            let iri = try IRI(validating: testCase.input)
-            let normalized = try iri.normalized(testCase.normalization)
-
-            #expect(normalized.rawValue == testCase.expected)
-            #expect(normalized.authority == iri.authority)
-            #expect(try normalized.normalized(testCase.normalization) == normalized)
-        }
-
-        @Test(
-            "A path written after the /. segment names the remove_dot_segments output, never an authority.",
-            .tags(.normalization),
-            arguments: [
-                SimpleComparisonCase(lhs: "foo:/.//a/./b", rhs: "foo:/.//a/b", areEqual: true),
-                SimpleComparisonCase(lhs: "foo:a/../..//b", rhs: "example:/.//b", areEqual: false),
-                SimpleComparisonCase(lhs: "foo:a/../..//b", rhs: "foo:/a/.././/b", areEqual: true),
+                // remove_dot_segments gives "//b" and "//bar". Without an
+                // authority that text would be read as the authority "b" or
+                // "bar", a different IRI, so the path is kept as it is.
                 SimpleComparisonCase(lhs: "foo:a/../..//b", rhs: "foo://b", areEqual: false),
                 SimpleComparisonCase(lhs: "example:/.//bar", rhs: "example://bar", areEqual: false),
                 SimpleComparisonCase(lhs: "example:/a/..//bar", rhs: "example://bar", areEqual: false),
+                // Keeping the path can leave two equivalent IRIs unequal, a
+                // false negative that RFC 3987 section 5.1 allows; writing
+                // "//a/b" would be the false positive it rules out.
+                SimpleComparisonCase(lhs: "foo:/.//a/./b", rhs: "foo:/.//a/b", areEqual: false),
             ]
         )
-        func dotSegmentPrefixComparison(_ testCase: SimpleComparisonCase) throws {
-            let lhs = try IRI(validating: testCase.lhs)
-            let rhs = try IRI(validating: testCase.rhs)
+        func pathThatWouldReadAsAnAuthorityIsKept(_ testCase: SimpleComparisonCase) throws {
+            let iri = try IRI(validating: testCase.lhs)
+            let normalized = try iri.normalized(.pathSegments)
 
-            #expect(try lhs.isEquivalent(to: rhs, under: .syntaxBased) == testCase.areEqual)
+            #expect(normalized == iri)
+            #expect(normalized.authority == nil)
+            #expect(try normalized.normalized(.pathSegments) == normalized)
+            #expect(try iri.isEquivalent(to: IRI(validating: testCase.rhs), under: .syntaxBased) == testCase.areEqual)
         }
 
         @Test(

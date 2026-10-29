@@ -47,18 +47,16 @@ enum IRINormalizer {
         }
 
         if normalization.contains(.pathSegments) {
-            path = removingDotSegments(from: path)
+            let candidate = removingDotSegments(from: path)
             // RFC 3986 section 3.3: when there is no authority, a path cannot
             // begin with "//", because the text would then be read as an
             // authority. remove_dot_segments can produce such a path (for
-            // example from "/.//a"); written as it is, the text would name a
-            // different IRI, which RFC 3987 section 5.1 forbids. The path is
-            // written as "/." followed by the remove_dot_segments output, the
-            // form the WHATWG URL Standard's URL serializer uses for the same
-            // case. remove_dot_segments of that text is the output again
-            // (step 2B), so it names the same path and is a fixed point.
-            if authority == nil, path.unicodeScalars.starts(with: "//".unicodeScalars) {
-                path = "/." + path
+            // example from "/.//a"); the recomposed text would name a
+            // different IRI, and RFC 3987 section 5.1 requires that
+            // comparison never produce such a false positive, so the path
+            // keeps its dot segments in that case.
+            if authority != nil || !candidate.unicodeScalars.starts(with: "//".unicodeScalars) {
+                path = candidate
             }
         }
 

@@ -53,13 +53,11 @@ Syntax-based normalization applies rules that hold for every IRI:
   can become absolute: `foo:a/../b` becomes `foo:/b`, which is also what
   RFC 3986 section 5.2.2 gives when it resolves that IRI. When there is no
   authority and the result would begin with `//`, such as `//b` from
-  `foo:a/../..//b`, the result is written after a `/.` segment, giving
-  `foo:/.//b`. RFC 3986 section 3.3 forbids a path that begins with `//`
-  when there is no authority, because the text would read as an authority
-  and name a different IRI, which RFC 3987 section 5.1 rules out.
-  `remove_dot_segments` of `/.//b` is `//b` again (step 2B), so the text
-  names the same path, and it is a fixed point. The WHATWG URL Standard's URL
-  serializer writes the same `/.` prefix for the same case.
+  `foo:a/../..//b`, the path is left as it is: RFC 3986 section 3.3 forbids
+  such a path, because the text would read as an authority and name a
+  different IRI, and RFC 3987 section 5.1 rules out that false positive.
+  Section 5.1 allows the false negative that remains: `foo:/.//a/./b` and
+  `foo:/.//a/b` are not equivalent.
 
 ```swift
 let lhs = try IRI(validating: "example://a/b/c/%7Bfoo%7D/rosé")
