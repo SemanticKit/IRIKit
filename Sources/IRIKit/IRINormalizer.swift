@@ -67,8 +67,14 @@ enum IRINormalizer {
                 throw IRIError.invalidIRI(original)
             }
 
-            if let port = parts.port, port.isEmpty || Int(port) == rule.defaultPort {
-                parts.port = nil
+            if let port = parts.port {
+                // RFC 3986 section 3.2.3: the port is a number in decimal,
+                // and the schemes with a rule use it as a TCP port number,
+                // so leading zeros do not change it. The digits are compared
+                // as text, so a port of any length is handled.
+                let digits = port.unicodeScalars.drop { $0 == "0" }
+                let number = digits.isEmpty ? "0" : IRIParser.text(digits)
+                parts.port = port.isEmpty || number == String(rule.defaultPort) ? nil : number
             }
             if !parts.isIPLiteral {
                 parts.host = domainNameNormalized(parts.host)

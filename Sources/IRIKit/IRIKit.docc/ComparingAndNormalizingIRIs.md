@@ -95,7 +95,10 @@ specifications define a default port, an empty path that is equivalent to
 | `ftp` | 21 | `/` | RFC 1738 section 3.2: "If :<port> is omitted, the port defaults to 21"; section 3.1: the "/" between host and url-path is not part of the url-path, so an empty path and `/` give the same url-path; section 5: `ftpurl` requires a `hostport` |
 
 For these schemes the default port and an empty port are removed, an empty
-path becomes `/`, and a host is required.
+path becomes `/`, and a host is required. RFC 3986 section 3.2.3 defines the
+port as a number in decimal, and each of these schemes uses it as a TCP port
+number, so leading zeros are removed from the port first: `:0080` is the
+default port and `:08080` becomes `:8080`.
 
 ```swift
 let forms = ["http://example.com", "http://example.com:/", "http://example.com:80/"]

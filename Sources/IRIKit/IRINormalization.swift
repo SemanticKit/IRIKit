@@ -71,6 +71,8 @@ public struct IRINormalization: OptionSet, Hashable, Sendable {
     ///
     /// - requires a non-empty host, and throws ``IRIError/invalidIRI(_:)``
     ///   when the host is missing;
+    /// - removes leading zeros from the port, which RFC 3986 section 3.2.3
+    ///   defines as a number in decimal;
     /// - removes an empty port or the scheme's default port (`80` for `http`
     ///   and `ws`, `443` for `https` and `wss`, `21` for `ftp`);
     /// - replaces an empty path with `/`;

@@ -135,6 +135,51 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
+            "Scheme-based normalization reads the port as a decimal number (RFC 3986 section 3.2.3), so leading zeros never change which port it names.",
+            .tags(.normalization),
+            arguments: [
+                NormalizationCase("http://example.org:08080/", .syntaxAndSchemeBased, expected: "http://example.org:8080/"),
+                NormalizationCase("http://example.org:0080/", .syntaxAndSchemeBased, expected: "http://example.org/"),
+                NormalizationCase("https://example.org:000443/", .syntaxAndSchemeBased, expected: "https://example.org/"),
+                NormalizationCase("ftp://example.org:021/", .syntaxAndSchemeBased, expected: "ftp://example.org/"),
+                NormalizationCase("http://example.org:0/", .syntaxAndSchemeBased, expected: "http://example.org:0/"),
+                NormalizationCase("http://example.org:000/", .syntaxAndSchemeBased, expected: "http://example.org:0/"),
+                NormalizationCase("http://[::1]:08080/", .syntaxAndSchemeBased, expected: "http://[::1]:8080/"),
+                // A port longer than any integer type is still compared as text.
+                NormalizationCase(
+                    "http://example.org:000000000000000000000000000080/", .syntaxAndSchemeBased,
+                    expected: "http://example.org/"
+                ),
+                NormalizationCase(
+                    "http://example.org:0123456789012345678901234567890/", .syntaxAndSchemeBased,
+                    expected: "http://example.org:123456789012345678901234567890/"
+                ),
+                // Schemes without a rule keep the port text.
+                NormalizationCase("custom://example.org:08080/", .syntaxAndSchemeBased, expected: "custom://example.org:08080/"),
+            ]
+        )
+        func portLeadingZeros(_ testCase: NormalizationCase) throws {
+            let iri = try IRI(validating: testCase.input)
+            let normalized = try iri.normalized(testCase.normalization)
+
+            #expect(normalized.rawValue == testCase.expected)
+            #expect(try normalized.normalized(testCase.normalization) == normalized)
+        }
+
+        @Test(
+            "Ports with and without leading zeros are equivalent under scheme-based normalization.",
+            .tags(.normalization)
+        )
+        func portsWithLeadingZerosAreEquivalent() throws {
+            let padded = try IRI(validating: "http://example.org:08080/")
+            let plain = try IRI(validating: "http://example.org:8080/")
+
+            #expect(padded != plain)
+            #expect(try !padded.isEquivalent(to: plain))
+            #expect(try padded.isEquivalent(to: plain, under: .syntaxAndSchemeBased))
+        }
+
+        @Test(
             "Scheme-based normalization leaves schemes without a known rule unchanged.",
             .tags(.normalization),
             arguments: [
