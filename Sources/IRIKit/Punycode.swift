@@ -1,5 +1,7 @@
-/// Punycode decoding from RFC 3492, used to compare IDN host labels with
-/// their ASCII Compatible Encoding during scheme-based normalization.
+/// Punycode decoding and encoding from RFC 3492, used to compare IDN host
+/// labels with their ASCII Compatible Encoding during scheme-based
+/// normalization. Encoding checks that a decoded label round-trips to the
+/// same ACE label (IDNA ToUnicode, RFC 3490 section 4.2).
 enum Punycode {
     private static let base = 36
     private static let tMin = 1

@@ -31,6 +31,10 @@ extension RFC3987ComplianceTests {
             ]
         )
         func rejectsWhitespace(_ string: String) {
+            // Deliberate change from URIKit, which trimmed surrounding
+            // whitespace before its strict check and so accepted
+            // " https://example.org/". IRIKit validates the text it is given;
+            // trimming belongs to the boundary decoder that read the text.
             #expect(throws: IRIError.invalidIRI(string)) {
                 _ = try IRI(validating: string)
             }
@@ -103,6 +107,8 @@ extension RFC3987ComplianceTests {
             arguments: [
                 NormalizationCase("https://example.org/a/b/../c/", expected: "https://example.org/a/c/"),
                 NormalizationCase("https://example.org/..", expected: "https://example.org/"),
+                // URIKit dropped the slash after a final "..", giving "/a".
+                NormalizationCase("https://example.org/a/b/..", expected: "https://example.org/a/"),
                 // URIKit collapsed "a//b" to "a/b", which changes the path.
                 NormalizationCase("https://example.org/a//b", expected: "https://example.org/a//b"),
             ]

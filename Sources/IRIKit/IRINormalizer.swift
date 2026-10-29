@@ -20,12 +20,14 @@ enum IRINormalizer {
             fragment = fragment.map(transform)
         }
 
-        if normalization.contains(.characters) {
-            transformText(nfc)
-        }
-
         if normalization.contains(.percentEncoding) {
             transformText(decodingUnreserved)
+        }
+
+        // NFC runs after percent-encoding decoding, so text that decoding
+        // produced is in NFC too and the result is a fixed point.
+        if normalization.contains(.characters) {
+            transformText(nfc)
         }
 
         if normalization.contains(.letterCase) {
@@ -264,8 +266,32 @@ enum IRINormalizer {
         }
 
         let mapped = unicodeLabel.lowercased().precomposedStringWithCompatibilityMapping
-        let candidate = isRegisteredNameText(mapped) ? mapped : asciiLowercased(unicodeLabel)
+        let candidate = isSafeCompatibilityMapping(mapped, of: unicodeLabel) ? mapped : asciiLowercased(unicodeLabel)
         return uppercasingPercentEncodings(candidate)
+    }
+
+    /// Accepts an NFKC-mapped label only when it is still `ireg-name` text
+    /// and introduces no percent sign. NFKC maps U+FF05 FULLWIDTH PERCENT
+    /// SIGN to `%`, which would either make the host invalid or let a
+    /// literal character read as an encoded octet (RFC 3987 section 8).
+    private static func isSafeCompatibilityMapping(_ mapped: String, of label: String) -> Bool {
+        guard isRegisteredNameText(mapped) else {
+            return false
+        }
+        let percentCount = { (text: String) in text.unicodeScalars.filter { $0 == "%" }.count }
+        guard percentCount(mapped) == percentCount(label) else {
+            return false
+        }
+        let scalars = Array(mapped.unicodeScalars)
+        for index in scalars.indices where scalars[index] == "%" {
+            guard index + 2 < scalars.count,
+                hexValue(scalars[index + 1]) != nil,
+                hexValue(scalars[index + 2]) != nil
+            else {
+                return false
+            }
+        }
+        return true
     }
 
     private static func isRegisteredNameText(_ string: String) -> Bool {

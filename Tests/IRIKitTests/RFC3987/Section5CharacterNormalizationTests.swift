@@ -56,6 +56,21 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
+            "Character normalization applies NFC to text that percent-encoding normalization decoded.",
+            .tags(.normalization)
+        )
+        func characterNormalizationCoversDecodedText() throws {
+            let encoded = try IRI(validating: "http://example.org/e%CC%81")
+            let composed = try IRI(validating: "http://example.org/\u{E9}")
+            let normalization: IRINormalization = [.syntaxBased, .characters]
+            let normalized = try encoded.normalized(normalization)
+
+            #expect(normalized.rawValue.unicodeScalars.elementsEqual(composed.rawValue.unicodeScalars))
+            #expect(try encoded.isEquivalent(to: composed, under: normalization))
+            #expect(try normalized.normalized(normalization) == normalized)
+        }
+
+        @Test(
             "Character normalization uses NFC, not NFKC, outside IDN host labels.",
             .tags(.normalization)
         )

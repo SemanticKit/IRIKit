@@ -211,5 +211,19 @@ extension RFC3987ComplianceTests {
 
             #expect(try iri.normalized(testCase.normalization).rawValue == testCase.expected)
         }
+
+        @Test(
+            "IDN host mapping never turns a fullwidth percent sign into a percent-encoding (RFC 3987 section 8).",
+            .tags(.normalization),
+            arguments: ["http://x\u{FF05}/", "http://a\u{FF05}41/", "https://\u{FF05}7E.example/"]
+        )
+        func fullwidthPercentSignInHostIsNotAnEncoding(_ string: String) throws {
+            let iri = try IRI(validating: string)
+            let normalized = try iri.normalized(.syntaxAndSchemeBased)
+
+            #expect(!normalized.rawValue.contains("%"))
+            #expect(try normalized.normalized(.syntaxAndSchemeBased) == normalized)
+            #expect(try !iri.isEquivalent(to: IRI(validating: "http://aa/"), under: .syntaxAndSchemeBased))
+        }
     }
 }

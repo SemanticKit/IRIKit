@@ -23,9 +23,11 @@ RFC 3987 section 5.3.2.3 requires.
 
 ## Compare Exact Text
 
-`==` compares the Unicode scalar sequences of two values. It is the right
-comparison for identity tokens such as namespace names, and it is what sets
-and dictionaries use.
+`==` compares the Unicode scalar sequences of two values. Use it at the I/O
+boundary, for example to match an incoming identifier exactly before a
+decoder turns it into a Swift type. An ``IRI`` is a boundary value, not a
+term identity inside the runtime, so do not build registries or
+dictionaries keyed by IRIs.
 
 ```swift
 let lhs = try IRI(validating: "http://example.org/~user")
