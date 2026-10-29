@@ -144,6 +144,14 @@ let separator = line.firstIndex(of: "=")!
 let iri = try IRI(line[line.index(after: separator)...])
 ```
 
+## Comparison
+
+All IRIKit value types compare by exact text. ``IRI`` and ``AbsoluteIRI``
+also provide `normalized(_:)` and `isEquivalent(to:under:)` for RFC 3987
+section 5 comparison; ``IRIReference`` does not, because a relative
+reference is compared only after its context resolves it. See
+<doc:ComparingAndNormalizingIRIs>.
+
 ## Complete API Surface
 
 Use this table to find the supported construction and conversion path for each
