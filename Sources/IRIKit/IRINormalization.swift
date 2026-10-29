@@ -39,8 +39,10 @@ public struct IRINormalization: OptionSet, Hashable, Sendable {
     /// algorithm of RFC 3986 section 5.2.4, exactly as written, so a
     /// rootless path such as `foo:a/../b` becomes `foo:/b`. Empty segments
     /// are kept. When there is no authority and the result would begin with
-    /// `//`, the path is left unchanged, because RFC 3986 section 3.3 forbids
-    /// such a path: the text would read as an authority.
+    /// `//`, which RFC 3986 section 3.3 forbids because the text would read
+    /// as an authority, the result is written after a `/.` segment:
+    /// `foo:a/../..//b` becomes `foo:/.//b`, whose `remove_dot_segments`
+    /// output is `//b` again.
     public static let pathSegments = IRINormalization(rawValue: 1 << 2)
 
     /// Character normalization to Unicode Normalization Form C (RFC 3987
