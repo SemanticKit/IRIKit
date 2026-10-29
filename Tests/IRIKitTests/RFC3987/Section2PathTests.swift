@@ -86,6 +86,59 @@ extension RFC3987ComplianceTests {
             }
         }
 
+        @Test(
+            "When authority is present, components whose path does not begin with '/' do not assemble into an IRI.",
+            arguments: [
+                IRIComponents(scheme: "urn", authority: "", path: "a"),
+                IRIComponents(scheme: "urn", authority: "h", path: "a"),
+                IRIComponents(scheme: "https", authority: "example.com", path: "path"),
+            ]
+        )
+        func rejectsAuthorityComponentsWithPathNotBeginningWithSlash(_ components: IRIComponents) {
+            #expect(throws: IRIError.invalidIRI(components.string)) {
+                try IRI(components: components)
+            }
+        }
+
+        @Test(
+            "Components that would parse back into different components do not assemble into an IRI.",
+            arguments: [
+                IRIComponents(scheme: "urn", path: "a?b"),
+                IRIComponents(scheme: "urn", path: "a#b"),
+                IRIComponents(scheme: "urn", path: "a", query: "b#c"),
+                IRIComponents(scheme: "https", authority: "example.com/p", path: "/q"),
+            ]
+        )
+        func rejectsComponentsThatDoNotRoundTrip(_ components: IRIComponents) {
+            #expect(throws: IRIError.invalidIRI(components.string)) {
+                try IRI(components: components)
+            }
+        }
+
+        @Test(
+            "ihier-part components assemble into an IRI that parses back into the same components.",
+            arguments: [
+                IRIComponents(scheme: "urn", authority: "", path: ""),
+                IRIComponents(scheme: "file", authority: "", path: "/etc/hosts"),
+                IRIComponents(scheme: "urn", authority: "h", path: "/a"),
+                IRIComponents(scheme: "https", authority: "example.com", path: "", query: "q", fragment: "f"),
+                IRIComponents(scheme: "urn", path: "/absolute/path"),
+                IRIComponents(scheme: "urn", path: "rootless/path"),
+                IRIComponents(scheme: "urn", path: ""),
+                IRIComponents(scheme: "urn", path: "a", query: "", fragment: ""),
+            ]
+        )
+        func roundTripsComponents(_ components: IRIComponents) throws {
+            let iri = try IRI(components: components)
+
+            #expect(iri.rawValue == components.string)
+            #expect(iri.scheme == components.scheme)
+            #expect(iri.authority == components.authority)
+            #expect(iri.path == components.path)
+            #expect(iri.query == components.query)
+            #expect(iri.fragment == components.fragment)
+        }
+
 
         @Test(
             "ipchar = iunreserved / pct-encoded / sub-delims / ':' / '@'",
