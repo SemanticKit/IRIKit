@@ -5,28 +5,33 @@ struct IRIAuthorityParts: Equatable, Sendable {
     var host: String
     var port: String?
 
+    /// Splits a validated authority at its delimiters.
+    ///
+    /// The search runs on Unicode scalars, as ``IRIParser`` does, so a
+    /// combining mark after `@` or `:` does not hide the delimiter.
     init(_ authority: String) {
-        var hostPort = Substring(authority)
-        if let at = authority.firstIndex(of: "@") {
-            userInfo = String(authority[..<at])
-            hostPort = authority[authority.index(after: at)...]
+        let scalars = Array(authority.unicodeScalars)[...]
+        var hostPort = scalars
+        if let at = scalars.firstIndex(of: "@") {
+            userInfo = IRIParser.text(scalars[..<at])
+            hostPort = scalars[(at + 1)...]
         } else {
             userInfo = nil
         }
 
-        let portSeparator: Substring.Index?
-        if hostPort.hasPrefix("["), let closing = hostPort.firstIndex(of: "]") {
-            let afterLiteral = hostPort.index(after: closing)
+        let portSeparator: Int?
+        if hostPort.first == "[", let closing = hostPort.firstIndex(of: "]") {
+            let afterLiteral = closing + 1
             portSeparator = afterLiteral < hostPort.endIndex ? afterLiteral : nil
         } else {
             portSeparator = hostPort.firstIndex(of: ":")
         }
 
         if let portSeparator {
-            host = String(hostPort[..<portSeparator])
-            port = String(hostPort[hostPort.index(after: portSeparator)...])
+            host = IRIParser.text(hostPort[..<portSeparator])
+            port = IRIParser.text(hostPort[(portSeparator + 1)...])
         } else {
-            host = String(hostPort)
+            host = IRIParser.text(hostPort)
             port = nil
         }
     }
@@ -38,7 +43,7 @@ struct IRIAuthorityParts: Equatable, Sendable {
     }
 
     var isIPLiteral: Bool {
-        host.hasPrefix("[")
+        host.unicodeScalars.first == "["
     }
 
     var string: String {
