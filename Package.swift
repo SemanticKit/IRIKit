@@ -23,6 +23,10 @@ let package = Package(
             name: "IRIKitTests",
             dependencies: [
                 "IRIKit"
+            ],
+            resources: [
+                .copy("Resources/NormalizationTest-3.2.0.txt"),
+                .copy("Resources/NormalizationTest-17.0.0.txt"),
             ]
         ),
     ]
