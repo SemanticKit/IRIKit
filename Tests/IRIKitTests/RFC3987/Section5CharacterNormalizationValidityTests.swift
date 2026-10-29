@@ -76,7 +76,7 @@ extension RFC3987ComplianceTests {
         }
 
         private static func nfc(_ text: String) -> String {
-            UnicodeNormalizationData.unicode17_0.normalized(text, .nfc)
+            UnicodeNormalizationData.unicode18_0.normalized(text, .nfc)
         }
 
         @Test(

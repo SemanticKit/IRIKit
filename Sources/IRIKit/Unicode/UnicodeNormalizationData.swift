@@ -2,11 +2,11 @@
 /// Forms (Unicode Standard Annex #15) need, for one version of Unicode.
 ///
 /// The tables are generated from the Unicode Character Database by
-/// `Scripts/UnicodeTables/generate.py`, which pins every input file by
-/// SHA-256 in `Scripts/UnicodeTables/sources.json`. IRIKit uses two
+/// `Scripts/UnicodeTables/generate.py`. `Scripts/UnicodeTables/sources.json`
+/// records the source and version of every input file. IRIKit uses two
 /// versions:
 ///
-/// - ``unicode17_0`` for RFC 3987 section 5.3.2.2 character normalization
+/// - ``unicode18_0`` for RFC 3987 section 5.3.2.2 character normalization
 ///   (NFC). The Unicode normalization stability policy keeps the NFC form
 ///   of text that is assigned in an earlier version unchanged in every later
 ///   version, so the latest version covers the most text.

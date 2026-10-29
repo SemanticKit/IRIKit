@@ -26,7 +26,7 @@ let package = Package(
             ],
             resources: [
                 .copy("Resources/NormalizationTest-3.2.0.txt"),
-                .copy("Resources/NormalizationTest-17.0.0.txt"),
+                .copy("Resources/NormalizationTest-18.0.0.txt"),
             ]
         ),
     ]

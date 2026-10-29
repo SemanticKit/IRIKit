@@ -50,7 +50,7 @@ public struct IRINormalization: OptionSet, Hashable, Sendable {
     /// character-normalized, so this step is not part of
     /// ``syntaxBased``. Use it only where the RFC allows it: when text was
     /// converted from a non-digital form or from a non-UCS character
-    /// encoding. NFC uses the Unicode 17.0.0 data that IRIKit carries.
+    /// encoding. NFC uses the Unicode 18.0.0 data that IRIKit carries.
     ///
     /// NFC runs on the text between percent-encoded triplets, which stand
     /// for octets (RFC 3986 section 2.1) and are kept. A character that NFC

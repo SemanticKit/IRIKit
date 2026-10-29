@@ -190,7 +190,7 @@ text between percent-encoded triplets, because a triplet stands for an octet
 with its last hex digit. When NFC maps a character to one the component does
 not allow, the result is percent-encoded as UTF-8, as RFC 3987 section 3.1
 encodes any character that cannot appear literally. The only such character
-in Unicode 17.0.0 is U+1FEF GREEK VARIA, whose canonical decomposition is the
+in Unicode 18.0.0 is U+1FEF GREEK VARIA, whose canonical decomposition is the
 grave accent U+0060.
 
 ```swift
@@ -203,11 +203,12 @@ try IRI(validating: "http://example.org/a\u{1FEF}").normalized(.characters).rawV
 IRIKit carries its own Unicode normalization, so normalization does not
 depend on Foundation or on the Unicode version of the platform.
 `Scripts/UnicodeTables/generate.py` writes the tables from the published
-data, and `Scripts/UnicodeTables/sources.json` pins each input by URL and
-SHA-256:
+data, and `Scripts/UnicodeTables/sources.json` records the source and
+version of each input. Each generated file names the inputs it was written
+from.
 
-- Character normalization (NFC) uses the Unicode Character Database 17.0.0.
-  Under the Unicode normalization stability policy, text whose characters
+- Character normalization (NFC) uses the Unicode Character Database 18.0.0,
+  the latest released version. Under the Unicode normalization stability policy, text whose characters
   are assigned in an earlier version has the same NFC form in every later
   version.
 - Nameprep uses the Unicode Character Database 3.2.0 and the tables of

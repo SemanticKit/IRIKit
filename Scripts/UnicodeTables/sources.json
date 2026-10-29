@@ -1,30 +1,22 @@
 {
-  "comment": "Pinned inputs for generate.py. Each file is downloaded from its URL and must match its SHA-256 before any table is written. The Unicode files come from the Unicode Consortium's unicodetools repository, which holds the published Unicode Character Database for every version; the RFC 3454 tables come from the GNU Libidn extract of RFC 3454 appendices A to D (doc/specifications/rfc3454.txt, which adds a Libidn preamble before the RFC text). The RFC Editor copy named in 'published' is not fetched; instead 'generate.py --crosscheck' verifies every table read from the extract (B.1, B.2, C.1.2 to C.9, D.1, D.2) for every code point against CPython's stringprep module, which CPython's Tools/unicode/mkstringprep.py generated from CPython's own copy of the RFC 3454 text and the Unicode 3.2.0 data, so the two copies of the tables are compared, not one copy with itself.",
+  "comment": "Inputs for generate.py: the source and version of every table. A released Unicode Character Database version never changes, so each Unicode file is named by its version. The Unicode files come from the Unicode Consortium's unicodetools repository, which publishes the Unicode Character Database of every released version (the same files as https://www.unicode.org/Public/). The RFC 3454 text comes from the GNU Libidn copy of the RFC; generate.py --crosscheck compares every table read from it with CPython's stringprep module, generated from CPython's own copy of the RFC.",
   "unicode": {
     "3.2.0": {
+      "use": "RFC 3491 Nameprep: RFC 3454 section 4 fixes Unicode 3.2 for stringprep NFKC",
       "published": "https://www.unicode.org/Public/3.2-Update/",
-      "baseURL": "https://raw.githubusercontent.com/unicode-org/unicodetools/578f6c0516f5f268292ebda50b51848407a06478/unicodetools/data/ucd/3.2.0-Update/",
-      "files": {
-        "UnicodeData.txt": "5e444028b6e76d96f9dc509609c5e3222bf609056f35e5fcde7e6fb8a58cd446",
-        "CompositionExclusions.txt": "1d3a450d0f39902710df4972ac4a60ec31fbcb54ffd4d53cd812fc1200c732cb",
-        "DerivedNormalizationProps.txt": "bab49295e5f9064213762447224ccd83cea0cced0db5dcfc96f9c8a935ef67ee",
-        "NormalizationTest.txt": "c4513869bb7098d19838be4a1fd5d760843c5804bfe03bd6bbb20623ceb6e57d"
-      }
+      "baseURL": "https://raw.githubusercontent.com/unicode-org/unicodetools/main/unicodetools/data/ucd/3.2.0-Update/",
+      "files": ["UnicodeData.txt", "CompositionExclusions.txt", "DerivedNormalizationProps.txt", "NormalizationTest.txt"]
     },
-    "17.0.0": {
-      "published": "https://www.unicode.org/Public/17.0.0/ucd/",
-      "baseURL": "https://raw.githubusercontent.com/unicode-org/unicodetools/578f6c0516f5f268292ebda50b51848407a06478/unicodetools/data/ucd/17.0.0/",
-      "files": {
-        "UnicodeData.txt": "2e1efc1dcb59c575eedf5ccae60f95229f706ee6d031835247d843c11d96470c",
-        "CompositionExclusions.txt": "2f239196ef3b5b61db5cc476e9bd80f534d15aa1b74e1be1dea5d042a344c85f",
-        "DerivedNormalizationProps.txt": "71fd6a206a2c0cdd41feb6b7f656aa31091db45e9cedc926985d718397f9e488",
-        "NormalizationTest.txt": "5019ffd530751a741900c849c0e010332f142a3612234639bd200b82138a87db"
-      }
+    "18.0.0": {
+      "use": "RFC 3987 section 5.3.2.2 character normalization (NFC): the latest released Unicode version",
+      "published": "https://www.unicode.org/Public/18.0.0/ucd/",
+      "baseURL": "https://raw.githubusercontent.com/unicode-org/unicodetools/main/unicodetools/data/ucd/18.0.0/",
+      "files": ["UnicodeData.txt", "CompositionExclusions.txt", "DerivedNormalizationProps.txt", "NormalizationTest.txt"]
     }
   },
+  "nfc": "18.0.0",
   "rfc3454": {
     "published": "https://www.rfc-editor.org/rfc/rfc3454.txt",
-    "url": "https://raw.githubusercontent.com/libidn/libidn/b027d9f56d9b79d1e756f84bd5718634101785dc/doc/specifications/rfc3454.txt",
-    "sha256": "132bd96ebad127f59c0212c7b3fc7f4f0022ca0528e6b692ee9246f5d913c10a"
+    "url": "https://raw.githubusercontent.com/libidn/libidn/master/doc/specifications/rfc3454.txt"
   }
 }

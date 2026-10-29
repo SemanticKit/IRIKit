@@ -4,14 +4,14 @@ import Testing
 @Suite("Unicode Normalization Forms conformance (UAX #15 NormalizationTest.txt)")
 struct UnicodeNormalizationConformanceTests {
     static let versions: [(data: UnicodeNormalizationData, file: String)] = [
-        (.unicode17_0, "17.0.0"),
+        (.unicode18_0, "18.0.0"),
         (.unicode3_2, "3.2.0"),
     ]
 
     @Test(
         "Every line of NormalizationTest.txt meets the conformance invariants for NFC, NFD, NFKC and NFKD.",
         .tags(.unicodeNormalization),
-        arguments: ["17.0.0", "3.2.0"]
+        arguments: ["18.0.0", "3.2.0"]
     )
     func conformanceInvariants(_ version: String) throws {
         let data = try #require(Self.versions.first { $0.file == version }?.data)
@@ -46,7 +46,7 @@ struct UnicodeNormalizationConformanceTests {
     @Test(
         "Every code point that Part 1 does not list normalizes to itself in every form.",
         .tags(.unicodeNormalization),
-        arguments: ["17.0.0", "3.2.0"]
+        arguments: ["18.0.0", "3.2.0"]
     )
     func unlistedCodePointsAreInvariant(_ version: String) throws {
         let data = try #require(Self.versions.first { $0.file == version }?.data)

@@ -310,7 +310,7 @@ enum IRINormalizer {
             guard !run.isEmpty else {
                 return
             }
-            let normalized = UnicodeNormalizationData.unicode17_0.normalized(String(run), .nfc)
+            let normalized = UnicodeNormalizationData.unicode18_0.normalized(String(run), .nfc)
             for scalar in normalized.unicodeScalars {
                 if scalar != "%", isAllowed(scalar), !IRIParser.isBidiFormattingCharacter(scalar) {
                     result.append(scalar)
