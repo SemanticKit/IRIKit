@@ -15,7 +15,13 @@ enum Punycode {
     ///
     /// Returns `nil` when the input is not valid Punycode.
     static func decode(_ input: String) -> String? {
-        let scalars = Array(input.unicodeScalars)
+        decode(Array(input.unicodeScalars)).map { String(String.UnicodeScalarView($0)) }
+    }
+
+    /// Decodes Punycode code points (the part of an ACE label after `xn--`).
+    ///
+    /// Returns `nil` when the input is not valid Punycode.
+    static func decode(_ scalars: [Unicode.Scalar]) -> [Unicode.Scalar]? {
         guard scalars.allSatisfy(\.isASCII) else {
             return nil
         }
@@ -79,17 +85,21 @@ enum Punycode {
             i += 1
         }
 
-        var result = ""
-        result.unicodeScalars.append(contentsOf: output)
-        return result
+        return output
     }
 
     /// Encodes a Unicode label as Punycode (without the `xn--` prefix).
     ///
     /// Returns `nil` when the encoding overflows.
     static func encode(_ input: String) -> String? {
-        let scalars = Array(input.unicodeScalars)
-        var output = String.UnicodeScalarView(scalars.filter(\.isASCII))
+        encode(Array(input.unicodeScalars)).map { String(String.UnicodeScalarView($0)) }
+    }
+
+    /// Encodes Unicode code points as Punycode (without the `xn--` prefix).
+    ///
+    /// Returns `nil` when the encoding overflows.
+    static func encode(_ scalars: [Unicode.Scalar]) -> [Unicode.Scalar]? {
+        var output = scalars.filter(\.isASCII)
         let basicCount = output.count
         var handled = basicCount
         if basicCount > 0 {
@@ -101,7 +111,11 @@ enum Punycode {
         var bias = initialBias
 
         while handled < scalars.count {
-            guard let m = scalars.lazy.map({ Int($0.value) }).filter({ $0 >= n }).min() else {
+            var m = Int.max
+            for scalar in scalars where Int(scalar.value) >= n && Int(scalar.value) < m {
+                m = Int(scalar.value)
+            }
+            guard m != Int.max else {
                 return nil
             }
             let (increment, incrementOverflow) = (m - n).multipliedReportingOverflow(by: handled + 1)
@@ -142,7 +156,7 @@ enum Punycode {
             n += 1
         }
 
-        return String(output)
+        return output
     }
 
     private static func digitScalar(_ digit: Int) -> Unicode.Scalar {

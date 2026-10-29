@@ -257,103 +257,73 @@ enum IRINormalizer {
     // MARK: - Character and IDN normalization
 
     private static func nfc(_ string: String) -> String {
-        string.canonicallyComposed
+        UnicodeNormalizationData.unicode17_0.normalized(string, .nfc)
     }
 
-    /// The longest DNS label in octets (RFC 1034 section 3.1). A longer
-    /// label cannot be a valid ACE label, so it is not Punycode-decoded,
-    /// which also bounds the cost of decoding untrusted input.
-    private static let maximumLabelLength = 63
-
-    /// Normalizes a DNS host for comparison: Punycode labels are decoded,
-    /// and each label is lowercased and mapped to NFKC, which are the case
-    /// folding and normalization steps of Nameprep (RFC 3491).
-    private static func domainNameNormalized(_ host: String) -> String {
-        host.split(separator: ".", omittingEmptySubsequences: false)
-            .map { domainLabelNormalized(String($0)) }
-            .joined(separator: ".")
-    }
-
-    /// Maps a label to its normal form.
+    /// Normalizes a DNS host for comparison (RFC 3987 section 5.3.3).
     ///
-    /// One pass is not always a fixed point: NFKC can produce uppercase
-    /// ASCII (U+210C BLACK-LETTER CAPITAL H gives `H`, U+1D400
-    /// MATHEMATICAL BOLD CAPITAL A gives `A`), and it can produce an ACE
-    /// prefix from fullwidth text. Nameprep (RFC 3491) folds such output to
-    /// lowercase, so the step repeats until its output stops changing,
-    /// which keeps the normal form idempotent. Every step refuses a mapping
-    /// that adds a label separator or percent sign, so the bound only
-    /// guards against a non-converging input.
-    private static func domainLabelNormalized(_ label: String) -> String {
-        var current = label
-        for _ in 0..<maximumLabelMappingPasses {
-            let next = domainLabelNormalizationStep(current)
-            if next == current {
-                return next
-            }
-            current = next
-        }
-        return current
-    }
-
-    private static let maximumLabelMappingPasses = 8
-
-    private static func domainLabelNormalizationStep(_ label: String) -> String {
-        var unicodeLabel = label
-        let lowercasedLabel = asciiLowercased(label)
-        // IDNA ToUnicode (RFC 3490 section 4.2): a label is only replaced
-        // when it decodes to non-ASCII text that encodes back to the same
-        // ACE label.
-        let encodedPart = String(lowercasedLabel.dropFirst(4))
-        if lowercasedLabel.hasPrefix("xn--"),
-            lowercasedLabel.utf8.count <= maximumLabelLength,
-            let decoded = Punycode.decode(encodedPart),
-            !decoded.unicodeScalars.allSatisfy(\.isASCII),
-            Punycode.encode(decoded) == encodedPart,
-            isRegisteredNameText(decoded)
-        {
-            unicodeLabel = decoded
-        }
-
-        let mapped = unicodeLabel.lowercased().compatibilityComposed
-        let candidate = isSafeCompatibilityMapping(mapped, of: unicodeLabel) ? mapped : asciiLowercased(unicodeLabel)
-        return uppercasingPercentEncodings(candidate)
-    }
-
-    /// Accepts an NFKC-mapped label only when it is still `ireg-name` text
-    /// and introduces no percent sign and no label separator.
-    ///
-    /// NFKC maps U+FF05 FULLWIDTH PERCENT SIGN to `%`, which would either
-    /// make the host invalid or let a literal character read as an encoded
-    /// octet. It also maps U+2488 DIGIT ONE FULL STOP to `1.` and U+3002,
-    /// U+FF0E and U+FF61 to `.`, which would split one label into two and
-    /// make distinct hosts compare as equivalent. Both are the spoofing
-    /// risks RFC 3987 section 8 describes, so such a label keeps its
-    /// original characters.
-    private static func isSafeCompatibilityMapping(_ mapped: String, of label: String) -> Bool {
-        guard isRegisteredNameText(mapped) else {
-            return false
-        }
-        let count = { (text: String, scalar: Unicode.Scalar) in text.unicodeScalars.filter { $0 == scalar }.count }
-        guard count(mapped, "%") == count(label, "%"), count(mapped, ".") == count(label, ".") else {
-            return false
-        }
-        let scalars = Array(mapped.unicodeScalars)
-        for index in scalars.indices where scalars[index] == "%" {
-            guard index + 2 < scalars.count,
-                hexValue(scalars[index + 1]) != nil,
-                hexValue(scalars[index + 2]) != nil
-            else {
-                return false
+    /// The host is split at the four label separators of RFC 3490
+    /// section 3.1, and each label is validated with IDNA ToASCII and mapped
+    /// by `domainLabelNormalized(_:)`. A trailing empty label is the root
+    /// label, which RFC 3490 section 2 does not count as a label, and stays.
+    /// When any label fails ToASCII the host is not a valid IDN, and RFC 3987
+    /// section 5.3.3 applies Nameprep only to validated IDN components, so
+    /// the host is returned unchanged. Labels are joined with U+002E FULL
+    /// STOP, as RFC 3490 section 4 step 4 does after ToASCII.
+    static func domainNameNormalized(_ host: String) -> String {
+        var labels: [[Unicode.Scalar]] = [[]]
+        for scalar in host.unicodeScalars {
+            if IDNA.isLabelSeparator(scalar) {
+                labels.append([])
+            } else {
+                labels[labels.count - 1].append(scalar)
             }
         }
-        return true
+        let hasRootLabel = labels.count > 1 && labels[labels.count - 1].isEmpty
+        if hasRootLabel {
+            labels.removeLast()
+        }
+
+        var result = String.UnicodeScalarView()
+        for (index, label) in labels.enumerated() {
+            guard let normalized = domainLabelNormalized(label) else {
+                return host
+            }
+            if index > 0 {
+                result.append(".")
+            }
+            result.append(contentsOf: normalized)
+        }
+        if hasRootLabel {
+            result.append(".")
+        }
+        return String(result)
     }
 
-    private static func isRegisteredNameText(_ string: String) -> Bool {
-        string.unicodeScalars.allSatisfy { scalar in
-            (IRIParser.isIUnreserved(scalar) || IRIParser.isSubDelimiter(scalar) || scalar == "%")
-                && !IRIParser.isBidiFormattingCharacter(scalar)
+    /// Maps a label to its normal form, or returns `nil` when ToASCII fails.
+    ///
+    /// The normal form is ToUnicode(ToASCII(label)) with ASCII letters
+    /// lowercased: the Nameprep form (RFC 3987 section 5.3.3), kept legible
+    /// rather than converted to ACE. When that text would not be a valid
+    /// `ireg-name` label, because it contains a label separator or a
+    /// character an IRI cannot hold, the lowercased ACE label is the normal
+    /// form instead.
+    ///
+    /// Two labels get the same normal form exactly when their ToASCII
+    /// results are equal ignoring ASCII case, which is the label comparison
+    /// of RFC 3490 section 3.1 requirement 4. The mapping is idempotent by
+    /// construction, so it needs no iteration: when ToUnicode decodes, it has
+    /// already checked that ToASCII of the decoded text gives the same ACE
+    /// label, so the normal form maps back to the same ToASCII result, and
+    /// Nameprep case-folds ASCII letters (table B.2), so lowercasing does not
+    /// change that result.
+    static func domainLabelNormalized(_ label: [Unicode.Scalar]) -> [Unicode.Scalar]? {
+        guard let ascii = IDNA.toASCII(label) else {
+            return nil
         }
+        let unicode = IDNA.toUnicode(ascii).map(IDNA.asciiLowercased)
+        let isLabelText = !unicode.contains(where: IDNA.isLabelSeparator)
+            && unicode.allSatisfy { IRIParser.isIUnreserved($0) && !IRIParser.isBidiFormattingCharacter($0) }
+        return isLabelText ? unicode : ascii.map(IDNA.asciiLowercased)
     }
 }

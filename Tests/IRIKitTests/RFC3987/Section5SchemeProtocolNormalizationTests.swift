@@ -250,26 +250,46 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
-            "IDN host mapping never splits a label into more labels (RFC 3987 section 8).",
+            "IDN host mapping recognizes the four label separators of RFC 3490 section 3.1 before splitting the host.",
+            .tags(.normalization),
+            arguments: [
+                NormalizationCase("http://example\u{3002}org/", .syntaxAndSchemeBased, expected: "http://example.org/"),
+                NormalizationCase("http://example\u{FF0E}org/", .syntaxAndSchemeBased, expected: "http://example.org/"),
+                NormalizationCase("http://example\u{FF61}org/", .syntaxAndSchemeBased, expected: "http://example.org/"),
+                NormalizationCase("http://b\u{FC}cher\u{3002}example\u{FF0E}/", .syntaxAndSchemeBased, expected: "http://b\u{FC}cher.example./"),
+            ]
+        )
+        func labelSeparatorsAreRecognized(_ testCase: NormalizationCase) throws {
+            let iri = try IRI(validating: testCase.input)
+            let normalized = try iri.normalized(testCase.normalization)
+
+            #expect(normalized.rawValue == testCase.expected)
+            #expect(try iri.isEquivalent(to: IRI(validating: testCase.expected), under: testCase.normalization))
+            #expect(try normalized.normalized(testCase.normalization) == normalized)
+        }
+
+        @Test(
+            "IDN host mapping rejects a label whose Nameprep output holds a full stop, so it never splits a label (RFC 3490 section 4.1 step 3, RFC 3987 section 8).",
             .tags(.normalization),
             arguments: [
                 SimpleComparisonCase(lhs: "http://www.google\u{2488}com/", rhs: "http://www.google1.com/", areEqual: false),
                 SimpleComparisonCase(lhs: "http://www.google\u{2488}com/", rhs: "http://www.google1.com./", areEqual: false),
-                SimpleComparisonCase(lhs: "http://example\u{3002}org/", rhs: "http://example.org/", areEqual: false),
-                SimpleComparisonCase(lhs: "http://example\u{FF0E}org/", rhs: "http://example.org/", areEqual: false),
-                SimpleComparisonCase(lhs: "http://example\u{FF61}org/", rhs: "http://example.org/", areEqual: false),
                 SimpleComparisonCase(lhs: "http://xn--a-ecp.ru/", rhs: "http://a1..ru/", areEqual: false),
-                SimpleComparisonCase(lhs: "http://xn--a-ecp.ru/", rhs: "http://a\u{2488}.ru/", areEqual: true),
+                SimpleComparisonCase(lhs: "http://xn--a-ecp.ru/", rhs: "http://a\u{2488}.ru/", areEqual: false),
             ]
         )
         func compatibilityMappingKeepsLabelBoundaries(_ testCase: SimpleComparisonCase) throws {
             let lhs = try IRI(validating: testCase.lhs)
             let rhs = try IRI(validating: testCase.rhs)
             let normalized = try lhs.normalized(.syntaxAndSchemeBased)
-            let labelCount = { (iri: IRI) in iri.rawValue.split(separator: "/")[1].split(separator: ".", omittingEmptySubsequences: false).count }
 
+            // U+2488 DIGIT ONE FULL STOP maps to "1." under NFKC, and
+            // UseSTD3ASCIIRules rejects the "." in a label, so ToASCII fails
+            // and the host is not a valid IDN: it keeps its characters, and
+            // the ACE label "xn--a-ecp" (which decodes to "a\u{2488}") stays
+            // ACE because ToUnicode fails.
             #expect(try lhs.isEquivalent(to: rhs, under: .syntaxAndSchemeBased) == testCase.areEqual)
-            #expect(labelCount(normalized) == labelCount(lhs))
+            #expect(normalized == lhs)
             #expect(try normalized.normalized(.syntaxAndSchemeBased) == normalized)
         }
 

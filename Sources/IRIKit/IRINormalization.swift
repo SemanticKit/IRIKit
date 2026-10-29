@@ -46,23 +46,28 @@ public struct IRINormalization: OptionSet, Hashable, Sendable {
     /// character-normalized, so this step is not part of
     /// ``syntaxBased``. Use it only where the RFC allows it: when text was
     /// converted from a non-digital form or from a non-UCS character
-    /// encoding.
+    /// encoding. NFC uses the Unicode 17.0.0 data that IRIKit carries.
     public static let characters = IRINormalization(rawValue: 1 << 3)
 
     /// Scheme-based normalization (RFC 3987 section 5.3.3).
     ///
-    /// Applies to the `http`, `https`, `ws`, `wss`, and `ftp` schemes, which
-    /// use the generic authority syntax with a DNS host and a default port.
-    /// For those schemes it:
+    /// Applies to the `http` and `https` schemes (RFC 9110 sections 4.2.1 to
+    /// 4.2.3), the `ws` and `wss` schemes (RFC 6455 section 3), and the `ftp`
+    /// scheme (RFC 1738 sections 3.1, 3.2 and 5). Each of these
+    /// specifications requires a host, defines a default port, and makes an
+    /// empty path equivalent to `/`. For those schemes this step:
     ///
     /// - requires a non-empty host, and throws ``IRIError/invalidIRI(_:)``
     ///   when the host is missing;
     /// - removes an empty port or the scheme's default port (`80` for `http`
     ///   and `ws`, `443` for `https` and `wss`, `21` for `ftp`);
     /// - replaces an empty path with `/`;
-    /// - decodes Punycode (`xn--`) host labels to Unicode, lowercases them,
-    ///   and maps them to Normalization Form KC, so that an IDN and its ACE
-    ///   form compare equal while the normal form stays legible.
+    /// - validates a registered-name host with IDNA ToASCII (RFC 3490) and,
+    ///   when every label is valid, replaces each label with its Nameprep
+    ///   (RFC 3491) form, decoding Punycode (`xn--`) labels, so that an IDN
+    ///   and its ACE form compare equal while the normal form stays legible.
+    ///   The host is split at the four label separators of RFC 3490
+    ///   section 3.1. A host that is not a valid IDN keeps its characters.
     ///
     /// IRIs with any other scheme are left unchanged by this step. Delimiters
     /// of empty queries and fragments are never removed.

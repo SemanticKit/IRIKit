@@ -93,9 +93,32 @@ try IRI(validating: "https:/relative").normalized(.syntaxAndSchemeBased)
 // Throws IRIError.invalidIRI("https:/relative")
 ```
 
-For these schemes, internationalized domain names and their Punycode form are
-equivalent. The normal form keeps the legible Unicode host, as RFC 3987
-section 5.3.3 recommends.
+### Internationalized Domain Names
+
+RFC 3987 section 5.3.3 says IDN host names "SHOULD be validated by using the
+ToASCII operation defined in [RFC3490]" and that validated IDN components
+"SHOULD be character normalized by using the Nameprep process [RFC3491]".
+IRIKit implements both, with the flags RFC 3987 section 3.1 sets for any use
+other than creating an IRI (UseSTD3ASCIIRules TRUE, AllowUnassigned TRUE):
+
+1. The host is split at the four label separators of RFC 3490 section 3.1:
+   U+002E, U+3002 IDEOGRAPHIC FULL STOP, U+FF0E FULLWIDTH FULL STOP and
+   U+FF61 HALFWIDTH IDEOGRAPHIC FULL STOP. A trailing empty label is the root
+   label and is kept.
+2. Each label goes through ToASCII (RFC 3490 section 4.1), which applies
+   Nameprep: table B.1 characters are removed, table B.2 case-folds (so `ß`
+   becomes `ss` and `ℌ` becomes `h`), the text is put in Normalization Form
+   KC of Unicode 3.2, and output with a prohibited character (tables C.1.2,
+   C.2.2 and C.3 to C.9) or that fails the bidi check of RFC 3454 section 6
+   is rejected. The STD3 rules then reject any ASCII character other than
+   letters, digits and `-`, and a leading or trailing `-`.
+3. When every label passes, each label's normal form is ToUnicode of its
+   ToASCII result (RFC 3490 section 4.2) with ASCII letters lowercased, and
+   the labels are joined with `.`. The normal form stays legible Unicode
+   rather than ACE. A label whose Unicode text could not stand in an IRI
+   host keeps its lowercased ACE form.
+4. When any label fails ToASCII the host is not a valid IDN, and it keeps
+   its characters.
 
 ```swift
 let unicode = try IRI(validating: "HTTPS://BÜCHER.Example:443/a/./b/../c")
@@ -106,21 +129,22 @@ try unicode.normalized(.syntaxAndSchemeBased).rawValue
 
 try unicode.isEquivalent(to: ace, under: .syntaxAndSchemeBased)
 // true
+
+try IRI(validating: "http://straße.example/").normalized(.syntaxAndSchemeBased).rawValue
+// "http://strasse.example/"
+
+try IRI(validating: "http://example。org/").normalized(.syntaxAndSchemeBased).rawValue
+// "http://example.org/"
 ```
 
-Each host label is lowercased and mapped to Unicode Normalization Form KC.
-Because Form KC can itself produce uppercase letters, as when `ℌ` becomes
-`H`, the mapping repeats until the label stops changing. `http://ℌ.example/`
-therefore normalizes to `http://h.example/`, and normalizing again changes
-nothing.
-A label keeps its original characters when the mapping would add a percent
-sign or a label separator, so `www.google⒈com` is not equivalent to
-`www.google1.com` and an ideographic full stop does not split a label. These
-mappings are the spoofing risks RFC 3987 section 8 describes. An ACE label
-longer than 63 octets, the DNS label limit, is never decoded.
-
-Character normalization and the host mapping use Foundation's Unicode
-normalization, because the standard library has no public API for it.
+Two labels have the same normal form exactly when their ToASCII results are
+equal ignoring ASCII case, which is how RFC 3490 section 3.1 says labels are
+compared. The mapping is applied once: ToUnicode accepts a decoded label only
+when ToASCII gives back the same ACE label, so normalizing a normal form
+changes nothing. A label such as `google⒈com`, whose Nameprep output
+contains a `.`, fails the STD3 rules, so `www.google⒈com` is not equivalent
+to `www.google1.com`; this is one of the spoofing risks RFC 3987 section 8
+describes.
 
 Empty query and fragment delimiters are never removed:
 `http://example.com/?` and `http://example.com/#` stay distinct from
@@ -139,6 +163,25 @@ let decomposed = try IRI(validating: "http://www.example.org/re\u{301}sume\u{301
 try decomposed.normalized([.syntaxBased, .characters]).rawValue
 // "http://www.example.org/résumé.html"
 ```
+
+## Where the Unicode Data Comes From
+
+IRIKit carries its own Unicode normalization, so normalization does not
+depend on Foundation or on the Unicode version of the platform.
+`Scripts/UnicodeTables/generate.py` writes the tables from the published
+data, and `Scripts/UnicodeTables/sources.json` pins each input by URL and
+SHA-256:
+
+- Character normalization (NFC) uses the Unicode Character Database 17.0.0.
+  Under the Unicode normalization stability policy, text whose characters
+  are assigned in an earlier version has the same NFC form in every later
+  version.
+- Nameprep uses the Unicode Character Database 3.2.0 and the tables of
+  RFC 3454 appendices B, C and D, because stringprep fixes Unicode 3.2
+  (RFC 3454 section 4).
+
+The test suite runs the Unicode conformance files `NormalizationTest.txt`
+for both versions.
 
 ## Leave References to Their Context
 
