@@ -38,7 +38,17 @@ enum IRINormalizer {
         }
 
         if normalization.contains(.pathSegments) {
-            path = pathRemovingDotSegments(path)
+            let candidate = removingDotSegments(from: path)
+            // RFC 3986 section 3.3: when there is no authority, a path cannot
+            // begin with "//", because the text would then be read as an
+            // authority. remove_dot_segments can produce such a path (for
+            // example from "/.//a"); the recomposed text would name a
+            // different IRI, and RFC 3987 section 5.1 requires that
+            // comparison never produce such a false positive, so the path
+            // keeps its dot segments in that case.
+            if authority != nil || !candidate.unicodeScalars.starts(with: "//".unicodeScalars) {
+                path = candidate
+            }
         }
 
         if normalization.contains(.scheme), let rule = IRISchemeNormalizationRule(scheme: scheme) {
@@ -57,12 +67,6 @@ enum IRINormalizer {
             if path.isEmpty {
                 path = "/"
             }
-        }
-
-        if authority == nil, path.hasPrefix("//") {
-            // Keep a path that dot-segment removal left starting with "//"
-            // from being read as an authority (RFC 3986 section 5.2.4).
-            path = "/." + path
         }
 
         var result = scheme + ":"
@@ -191,67 +195,74 @@ enum IRINormalizer {
 
     // MARK: - Path segment normalization
 
-    /// The `remove_dot_segments` algorithm from RFC 3986 section 5.2.4.
+    /// The `remove_dot_segments` algorithm of RFC 3986 section 5.2.4, step
+    /// for step.
+    ///
+    /// The algorithm works on characters, so the buffers hold Unicode
+    /// scalars: a combining mark after `/` or `.` must not merge with it the
+    /// way it would in a `Character`.
     static func removingDotSegments(from path: String) -> String {
-        var input = Substring(path)
-        var output = ""
+        // Step 1: the input buffer holds the path, the output buffer is empty.
+        var input = Array(path.unicodeScalars)[...]
+        var output: [Unicode.Scalar] = []
 
-        func removeLastOutputSegment() {
-            if let slash = output.lastIndex(of: "/") {
-                output.removeSubrange(slash...)
-            } else {
-                output.removeAll()
-            }
+        func hasPrefix(_ prefix: String) -> Bool {
+            input.starts(with: prefix.unicodeScalars)
         }
 
+        func isExactly(_ text: String) -> Bool {
+            input.elementsEqual(text.unicodeScalars)
+        }
+
+        // Step 2: while the input buffer is not empty, loop.
         while !input.isEmpty {
-            if input.hasPrefix("../") {
+            if hasPrefix("../") {
+                // 2A: remove the prefix "../".
                 input.removeFirst(3)
-            } else if input.hasPrefix("./") {
+            } else if hasPrefix("./") {
+                // 2A: remove the prefix "./".
                 input.removeFirst(2)
-            } else if input.hasPrefix("/./") {
+            } else if hasPrefix("/./") {
+                // 2B: replace the prefix "/./" with "/".
                 input.removeFirst(2)
-            } else if input == "/." {
-                input = "/"
-            } else if input.hasPrefix("/../") {
+            } else if isExactly("/.") {
+                // 2B: replace "/." (a complete path segment) with "/".
+                input = ["/"]
+            } else if hasPrefix("/../") {
+                // 2C: replace the prefix "/../" with "/" and remove the last
+                // segment and its preceding "/" (if any) from the output.
                 input.removeFirst(3)
-                removeLastOutputSegment()
-            } else if input == "/.." {
-                input = "/"
-                removeLastOutputSegment()
-            } else if input == "." || input == ".." {
+                removeLastSegment(from: &output)
+            } else if isExactly("/..") {
+                // 2C: replace "/.." (a complete path segment) with "/" and
+                // remove the last output segment.
+                input = ["/"]
+                removeLastSegment(from: &output)
+            } else if isExactly(".") || isExactly("..") {
+                // 2D: remove "." or "..".
                 input.removeAll()
             } else {
-                let searchStart = input.hasPrefix("/") ? input.index(after: input.startIndex) : input.startIndex
+                // 2E: move the first path segment, with its initial "/" if
+                // any, and every character up to the next "/", to the output.
+                let searchStart = input.first == "/" ? input.index(after: input.startIndex) : input.startIndex
                 let segmentEnd = input[searchStart...].firstIndex(of: "/") ?? input.endIndex
-                output += input[..<segmentEnd]
+                output.append(contentsOf: input[..<segmentEnd])
                 input = input[segmentEnd...]
             }
         }
 
-        return output
+        // Step 3: the output buffer is the result.
+        var result = String.UnicodeScalarView()
+        result.append(contentsOf: output)
+        return String(result)
     }
 
-    /// Removes dot segments and keeps the kind of path the input had.
-    ///
-    /// An absolute or empty path goes through RFC 3986 section 5.2.4 as is.
-    /// A rootless path is treated as if it were rooted, then the root is
-    /// taken off again, so the result stays rootless. When the result
-    /// starts with an empty segment it is written after a "./" segment,
-    /// which keeps it from reading as an absolute path and is stable when
-    /// normalized again.
-    static func pathRemovingDotSegments(_ path: String) -> String {
-        guard !path.isEmpty, !path.hasPrefix("/") else {
-            return removingDotSegments(from: path)
+    private static func removeLastSegment(from output: inout [Unicode.Scalar]) {
+        if let slash = output.lastIndex(of: "/") {
+            output.removeSubrange(slash...)
+        } else {
+            output.removeAll()
         }
-        var rootless = removingDotSegments(from: "/" + path)
-        if rootless.hasPrefix("/") {
-            rootless.removeFirst()
-        }
-        if rootless.hasPrefix("/") {
-            rootless = "./" + rootless
-        }
-        return rootless
     }
 
     // MARK: - Character and IDN normalization

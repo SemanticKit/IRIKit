@@ -48,10 +48,14 @@ Syntax-based normalization applies rules that hold for every IRI:
   `ros%C3%A9` and `rosé` match. Reserved characters such as `%2F` stay
   encoded.
 - ``IRINormalization/pathSegments`` removes `.` and `..` segments with the
-  RFC 3986 `remove_dot_segments` algorithm. A rootless path such as
-  `foo:a/../b` stays rootless (`foo:b`), and a result that would start with
-  an empty segment is written after a `./` segment (`foo:a/../..//b` becomes
-  `foo:.//b`) so it does not read as an absolute path or an authority.
+  `remove_dot_segments` algorithm of RFC 3986 section 5.2.4, exactly as
+  written. The algorithm treats every path the same way, so a rootless path
+  can become absolute: `foo:a/../b` becomes `foo:/b`, which is also what
+  RFC 3986 section 5.2.2 gives when it resolves that IRI. When there is no
+  authority and the result would begin with `//`, such as `//b` from
+  `foo:a/../..//b`, the path is left as it is: RFC 3986 section 3.3 forbids
+  such a path, because the text would read as an authority and name a
+  different IRI, and RFC 3987 section 5.1 rules out that false positive.
 
 ```swift
 let lhs = try IRI(validating: "example://a/b/c/%7Bfoo%7D/rosé")

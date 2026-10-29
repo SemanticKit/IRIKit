@@ -105,8 +105,6 @@ extension RFC3987ComplianceTests {
                 NormalizationCase("http://example.org/a.b/..c/d.", .pathSegments, expected: "http://example.org/a.b/..c/d."),
                 NormalizationCase("http://example.org/a?x=/../y#/./z", .pathSegments, expected: "http://example.org/a?x=/../y#/./z"),
                 NormalizationCase("example:mid/content=5/../6", .pathSegments, expected: "example:mid/6"),
-                NormalizationCase("example:/.//bar", .pathSegments, expected: "example:/.//bar"),
-                NormalizationCase("example:/a/..//bar", .pathSegments, expected: "example:/.//bar"),
             ]
         )
         func pathSegmentNormalization(_ testCase: NormalizationCase) throws {
@@ -116,24 +114,48 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
-            "Path segment normalization keeps a rootless path rootless.",
+            "Path segment normalization runs remove_dot_segments as written for a rootless path (RFC 3986 section 5.2.4).",
             .tags(.normalization),
             arguments: [
-                NormalizationCase("foo:a/../..//b", .pathSegments, expected: "foo:.//b"),
-                NormalizationCase("foo:.//b", .pathSegments, expected: "foo:.//b"),
-                NormalizationCase("foo:a/../b", .pathSegments, expected: "foo:b"),
-                NormalizationCase("foo:a/..", .pathSegments, expected: "foo:"),
+                // Step 2C removes "a" and its "/" and then writes "/b", so the
+                // rootless path becomes "/b", as RFC 3986 section 5.2.2 also
+                // gives for "foo:a/../b" (T.path = remove_dot_segments(R.path)).
+                NormalizationCase("foo:a/../b", .pathSegments, expected: "foo:/b"),
+                NormalizationCase("foo:a/..", .pathSegments, expected: "foo:/"),
+                NormalizationCase("foo:.//b", .pathSegments, expected: "foo:/b"),
                 NormalizationCase("foo:a/b/../c/./d", .pathSegments, expected: "foo:a/c/d"),
                 NormalizationCase("foo:../a", .pathSegments, expected: "foo:a"),
+                NormalizationCase("foo:mid/content=5/../6", .pathSegments, expected: "foo:mid/6"),
             ]
         )
-        func rootlessPathStaysRootless(_ testCase: NormalizationCase) throws {
+        func rootlessPathFollowsTheAlgorithm(_ testCase: NormalizationCase) throws {
             let iri = try IRI(validating: testCase.input)
             let normalized = try iri.normalized(testCase.normalization)
 
             #expect(normalized.rawValue == testCase.expected)
-            #expect(!normalized.rawValue.dropFirst("foo:".count).hasPrefix("/"))
             #expect(try normalized.normalized(testCase.normalization) == normalized)
+        }
+
+        @Test(
+            "Path segment normalization keeps the path when remove_dot_segments would start it with // and there is no authority (RFC 3986 section 3.3).",
+            .tags(.normalization),
+            arguments: [
+                // remove_dot_segments gives "//b" and "//bar". Without an
+                // authority that text would be read as the authority "b" or
+                // "bar", a different IRI, so the path is kept as it is.
+                SimpleComparisonCase(lhs: "foo:a/../..//b", rhs: "foo://b", areEqual: false),
+                SimpleComparisonCase(lhs: "example:/.//bar", rhs: "example://bar", areEqual: false),
+                SimpleComparisonCase(lhs: "example:/a/..//bar", rhs: "example://bar", areEqual: false),
+            ]
+        )
+        func pathThatWouldReadAsAnAuthorityIsKept(_ testCase: SimpleComparisonCase) throws {
+            let iri = try IRI(validating: testCase.lhs)
+            let normalized = try iri.normalized(.pathSegments)
+
+            #expect(normalized == iri)
+            #expect(normalized.authority == nil)
+            #expect(try normalized.normalized(.pathSegments) == normalized)
+            #expect(try iri.isEquivalent(to: IRI(validating: testCase.rhs), under: .syntaxBased) == testCase.areEqual)
         }
 
         @Test(
