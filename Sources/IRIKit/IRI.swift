@@ -43,6 +43,11 @@ public struct IRI: ExpressibleByStringLiteral, LosslessStringConvertible, RawRep
     /// - Throws: `IRIError.invalidIRI` when the assembled character sequence
     ///   is not an absolute IRI.
     public init(components: IRIComponents) throws {
+        // Without an authority, a path cannot begin with "//": the assembled
+        // string would read the path's first segment as an empty authority.
+        if components.authority == nil, components.path.unicodeScalars.starts(with: "//".unicodeScalars) {
+            throw IRIError.invalidIRI(components.string)
+        }
         try self.init(validating: components.string)
     }
 

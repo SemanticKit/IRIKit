@@ -50,11 +50,9 @@ enum IRIParser {
             remaining = remaining.dropFirst(2)
             let authorityEnd =
                 remaining.firstIndex { $0 == "/" || $0 == "?" || $0 == "#" } ?? remaining.endIndex
-            let authorityValue = remaining[..<authorityEnd]
-            guard !authorityValue.isEmpty else {
-                throw IRIError.invalidIRIReference(text(rest))
-            }
-            authority = text(authorityValue)
+            // ireg-name = *( iunreserved / pct-encoded / sub-delims ) may be
+            // empty, as in file:///etc/hosts.
+            authority = text(remaining[..<authorityEnd])
             remaining = remaining[authorityEnd...]
         }
 

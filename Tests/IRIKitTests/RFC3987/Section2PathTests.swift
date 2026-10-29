@@ -74,15 +74,18 @@ extension RFC3987ComplianceTests {
         @Test(
             "When authority is absent, ipath-absolute begins with '/' but not '//'.",
             arguments: [
-                "urn://",
-                "urn:////path",
+                "//",
+                "////path",
             ]
         )
-        func rejectsNoAuthorityPathsBeginningWithDoubleSlash(_ iriString: String) {
-            #expect(throws: IRIError.invalidIRI(iriString)) {
-                try IRI(validating: iriString)
+        func rejectsNoAuthorityPathsBeginningWithDoubleSlash(_ path: String) {
+            let components = IRIComponents(scheme: "urn", path: path)
+
+            #expect(throws: IRIError.invalidIRI(components.string)) {
+                try IRI(components: components)
             }
         }
+
 
         @Test(
             "ipchar = iunreserved / pct-encoded / sub-delims / ':' / '@'",

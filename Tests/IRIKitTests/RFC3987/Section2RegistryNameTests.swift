@@ -37,5 +37,22 @@ extension RFC3987ComplianceTests {
 
             #expect(reference.rawValue == "//")
         }
+
+        @Test(
+            "An absolute IRI may have an empty ireg-name.",
+            arguments: [
+                ("file:///etc/hosts", "/etc/hosts"),
+                ("file:///a/bb/ccc/d;p?q", "/a/bb/ccc/d;p"),
+                ("urn://", ""),
+                ("urn:////path", "//path"),
+            ]
+        )
+        func acceptsAbsoluteIRIWithEmptyRegistryName(_ iriString: String, path: String) throws {
+            let iri = try IRI(validating: iriString)
+
+            #expect(iri.rawValue == iriString)
+            #expect(iri.authority == "")
+            #expect(iri.path == path)
+        }
     }
 }
