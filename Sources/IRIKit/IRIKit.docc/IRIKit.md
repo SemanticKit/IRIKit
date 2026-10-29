@@ -73,6 +73,11 @@ IRIKit follows [RFC 3987](https://datatracker.ietf.org/doc/html/rfc3987) for IRI
 - ``AbsoluteIRI``
 - ``IRIReference``
 
+### Compare and Normalize IRIs
+
+- <doc:ComparingAndNormalizingIRIs>
+- ``IRINormalization``
+
 ### Build IRIs from Parts
 
 - ``IRIComponents``

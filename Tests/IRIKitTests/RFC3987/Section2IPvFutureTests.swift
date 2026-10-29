@@ -6,6 +6,7 @@ extension RFC3987ComplianceTests {
     struct Section2IPvFutureTests {
         @Test(
             "IPvFuture = 'v' 1*HEXDIG '.' 1*( unreserved / sub-delims / ':' )",
+            .tags(.parsing),
             arguments: [
                 "https://[v1.a]/",
                 "https://[vF.alpha:beta]/",
@@ -19,7 +20,22 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
+            "The IPvFuture 'v' is case-insensitive, as every ABNF literal is (RFC 5234 section 2.3).",
+            .tags(.parsing),
+            arguments: [
+                "http://[V1.a]/",
+                "https://[VF.alpha:beta]/",
+            ]
+        )
+        func acceptsUppercaseIPvFutureVersionFlag(_ iriString: String) throws {
+            let iri = try IRI(validating: iriString)
+
+            #expect(iri.rawValue == iriString)
+        }
+
+        @Test(
             "IPvFuture requires at least one version hex digit.",
+            .tags(.parsing),
             arguments: [
                 "https://[v.alpha]/",
                 "https://[v.]/",
@@ -33,6 +49,7 @@ extension RFC3987ComplianceTests {
 
         @Test(
             "IPvFuture address text excludes gen-delims other than ':'.",
+            .tags(.parsing),
             arguments: [
                 "https://[v1.a/b]/",
                 "https://[v1.a?b]/",

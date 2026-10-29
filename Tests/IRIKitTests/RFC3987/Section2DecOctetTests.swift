@@ -6,6 +6,7 @@ extension RFC3987ComplianceTests {
     struct Section2DecOctetTests {
         @Test(
             "dec-octet covers 0 through 255 without leading zero multi-digit forms.",
+            .tags(.parsing),
             arguments: [
                 "https://0.0.0.0/",
                 "https://9.9.9.9/",
@@ -20,7 +21,8 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
-            "dec-octet rejects values outside 0 through 255 and leading zero multi-digit forms.",
+            "A host with a value outside dec-octet is not an IPv4address, so it is an ireg-name (RFC 3986 section 3.2.2).",
+            .tags(.parsing),
             arguments: [
                 "https://00.0.0.0/",
                 "https://01.0.0.0/",
@@ -28,10 +30,10 @@ extension RFC3987ComplianceTests {
                 "https://999.0.0.0/",
             ]
         )
-        func rejectsInvalidDecOctets(_ iriString: String) {
-            #expect(throws: IRIError.invalidIRI(iriString)) {
-                try IRI(validating: iriString)
-            }
+        func readsInvalidDecOctetsAsRegisteredNames(_ iriString: String) throws {
+            let iri = try IRI(validating: iriString)
+
+            #expect(iri.rawValue == iriString)
         }
     }
 }

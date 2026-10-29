@@ -44,9 +44,11 @@ extension IRIReference: Codable {}
 
 extension IRIReference: Comparable {
     /// Returns whether the left reference sorts before the right reference by
-    /// simple string comparison.
+    /// simple string comparison: the
+    /// lexicographic order of Unicode scalar values, the same sequences `==`
+    /// compares, so two values that are not equal never tie.
     public static func < (lhs: IRIReference, rhs: IRIReference) -> Bool {
-        lhs.rawValue < rhs.rawValue
+        lhs.rawValue.unicodeScalars.lexicographicallyPrecedes(rhs.rawValue.unicodeScalars)
     }
 }
 
