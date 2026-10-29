@@ -179,6 +179,20 @@ try decomposed.normalized([.syntaxBased, .characters]).rawValue
 // "http://www.example.org/résumé.html"
 ```
 
+Character normalization never makes a valid IRI invalid. NFC runs on the
+text between percent-encoded triplets, because a triplet stands for an octet
+(RFC 3986 section 2.1), so a combining mark after a triplet does not compose
+with its last hex digit. When NFC maps a character to one the component does
+not allow, the result is percent-encoded as UTF-8, as RFC 3987 section 3.1
+encodes any character that cannot appear literally. The only such character
+in Unicode 17.0.0 is U+1FEF GREEK VARIA, whose canonical decomposition is the
+grave accent U+0060.
+
+```swift
+try IRI(validating: "http://example.org/a\u{1FEF}").normalized(.characters).rawValue
+// "http://example.org/a%60"
+```
+
 ## Where the Unicode Data Comes From
 
 IRIKit carries its own Unicode normalization, so normalization does not

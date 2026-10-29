@@ -25,7 +25,16 @@ enum IRINormalizer {
         // NFC runs after percent-encoding decoding, so text that decoding
         // produced is in NFC too and the result is a fixed point.
         if normalization.contains(.characters) {
-            transformText(nfc)
+            if var parts = authority {
+                parts.userInfo = parts.userInfo.map { characterNormalized($0, allowing: isUserInfoCharacter) }
+                if !parts.isIPLiteral {
+                    parts.host = characterNormalized(parts.host, allowing: isRegisteredNameCharacter)
+                }
+                authority = parts
+            }
+            path = characterNormalized(path, allowing: IRIParser.isPathCharacter)
+            query = query.map { characterNormalized($0, allowing: isQueryCharacter) }
+            fragment = fragment.map { characterNormalized($0, allowing: isFragmentCharacter) }
         }
 
         if normalization.contains(.letterCase) {
@@ -267,8 +276,87 @@ enum IRINormalizer {
 
     // MARK: - Character and IDN normalization
 
-    private static func nfc(_ string: String) -> String {
-        UnicodeNormalizationData.unicode17_0.normalized(string, .nfc)
+    /// Applies NFC (RFC 3987 section 5.3.2.2) to the characters of one
+    /// component.
+    ///
+    /// A `pct-encoded` triplet stands for an octet (RFC 3986 section 2.1),
+    /// not for the three characters it is written with, so NFC runs on the
+    /// text between triplets and every triplet is kept as it is. Otherwise a
+    /// combining mark after a triplet would compose with its last hexadecimal
+    /// digit, as `%4E` followed by U+0301 would become `%4` and U+0143.
+    ///
+    /// NFC can map an allowed character to one the component does not allow:
+    /// U+1FEF GREEK VARIA has the canonical decomposition U+0060 GRAVE
+    /// ACCENT, which no IRI component allows. Such a character is
+    /// percent-encoded as the octets of its UTF-8 form, with uppercase
+    /// hexadecimal digits, as RFC 3987 section 3.1 step 2 and RFC 3986
+    /// section 2.1 encode a character that cannot appear literally, so the
+    /// normal form of a valid IRI is always a valid IRI.
+    static func characterNormalized(
+        _ string: String,
+        allowing isAllowed: (Unicode.Scalar) -> Bool
+    ) -> String {
+        let scalars = Array(string.unicodeScalars)
+        var result = String.UnicodeScalarView()
+        var run = String.UnicodeScalarView()
+
+        func appendNormalizedRun() {
+            guard !run.isEmpty else {
+                return
+            }
+            let normalized = UnicodeNormalizationData.unicode17_0.normalized(String(run), .nfc)
+            for scalar in normalized.unicodeScalars {
+                if scalar != "%", isAllowed(scalar), !IRIParser.isBidiFormattingCharacter(scalar) {
+                    result.append(scalar)
+                } else {
+                    appendPercentEncoded(scalar, to: &result)
+                }
+            }
+            run = String.UnicodeScalarView()
+        }
+
+        var index = 0
+        while index < scalars.count {
+            if scalars[index] == "%", index + 2 < scalars.count {
+                appendNormalizedRun()
+                result.append(contentsOf: scalars[index...(index + 2)])
+                index += 3
+            } else {
+                run.append(scalars[index])
+                index += 1
+            }
+        }
+        appendNormalizedRun()
+        return String(result)
+    }
+
+    private static func appendPercentEncoded(_ scalar: Unicode.Scalar, to result: inout String.UnicodeScalarView) {
+        let digits = Array("0123456789ABCDEF".unicodeScalars)
+        for byte in String(scalar).utf8 {
+            result.append("%")
+            result.append(digits[Int(byte >> 4)])
+            result.append(digits[Int(byte & 0x0F)])
+        }
+    }
+
+    /// The characters an `iuserinfo` may hold besides `pct-encoded`.
+    private static func isUserInfoCharacter(_ scalar: Unicode.Scalar) -> Bool {
+        IRIParser.isIUnreserved(scalar) || IRIParser.isSubDelimiter(scalar) || scalar == ":"
+    }
+
+    /// The characters an `ireg-name` may hold besides `pct-encoded`.
+    private static func isRegisteredNameCharacter(_ scalar: Unicode.Scalar) -> Bool {
+        IRIParser.isIUnreserved(scalar) || IRIParser.isSubDelimiter(scalar)
+    }
+
+    /// The characters an `iquery` may hold: `ipchar`, `iprivate`, `/` and `?`.
+    private static func isQueryCharacter(_ scalar: Unicode.Scalar) -> Bool {
+        IRIParser.isPathCharacter(scalar) || IRIParser.isIPrivate(scalar) || scalar == "?"
+    }
+
+    /// The characters an `ifragment` may hold: `ipchar`, `/` and `?`.
+    private static func isFragmentCharacter(_ scalar: Unicode.Scalar) -> Bool {
+        IRIParser.isPathCharacter(scalar) || scalar == "?"
     }
 
     /// Normalizes a DNS host for comparison (RFC 3987 section 5.3.3).

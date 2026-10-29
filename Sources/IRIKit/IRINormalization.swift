@@ -51,6 +51,12 @@ public struct IRINormalization: OptionSet, Hashable, Sendable {
     /// ``syntaxBased``. Use it only where the RFC allows it: when text was
     /// converted from a non-digital form or from a non-UCS character
     /// encoding. NFC uses the Unicode 17.0.0 data that IRIKit carries.
+    ///
+    /// NFC runs on the text between percent-encoded triplets, which stand
+    /// for octets (RFC 3986 section 2.1) and are kept. A character that NFC
+    /// produces and the component does not allow, such as the U+0060 that
+    /// U+1FEF decomposes to, is percent-encoded as UTF-8 (RFC 3987
+    /// section 3.1), so this step never makes a valid IRI invalid.
     public static let characters = IRINormalization(rawValue: 1 << 3)
 
     /// Scheme-based normalization (RFC 3987 section 5.3.3).
