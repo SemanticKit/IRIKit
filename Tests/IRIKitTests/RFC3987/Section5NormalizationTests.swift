@@ -112,6 +112,27 @@ extension RFC3987ComplianceTests {
         }
 
         @Test(
+            "Path segment normalization keeps a rootless path rootless.",
+            .tags(.normalization),
+            arguments: [
+                NormalizationCase("foo:a/../..//b", .pathSegments, expected: "foo:.//b"),
+                NormalizationCase("foo:.//b", .pathSegments, expected: "foo:.//b"),
+                NormalizationCase("foo:a/../b", .pathSegments, expected: "foo:b"),
+                NormalizationCase("foo:a/..", .pathSegments, expected: "foo:"),
+                NormalizationCase("foo:a/b/../c/./d", .pathSegments, expected: "foo:a/c/d"),
+                NormalizationCase("foo:../a", .pathSegments, expected: "foo:a"),
+            ]
+        )
+        func rootlessPathStaysRootless(_ testCase: NormalizationCase) throws {
+            let iri = try IRI(validating: testCase.input)
+            let normalized = try iri.normalized(testCase.normalization)
+
+            #expect(normalized.rawValue == testCase.expected)
+            #expect(!normalized.rawValue.dropFirst("foo:".count).hasPrefix("/"))
+            #expect(try normalized.normalized(testCase.normalization) == normalized)
+        }
+
+        @Test(
             "Percent-encoding normalization runs before dot-segment removal.",
             .tags(.normalization)
         )

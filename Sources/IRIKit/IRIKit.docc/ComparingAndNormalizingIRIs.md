@@ -48,7 +48,10 @@ Syntax-based normalization applies rules that hold for every IRI:
   `ros%C3%A9` and `rosé` match. Reserved characters such as `%2F` stay
   encoded.
 - ``IRINormalization/pathSegments`` removes `.` and `..` segments with the
-  RFC 3986 `remove_dot_segments` algorithm.
+  RFC 3986 `remove_dot_segments` algorithm. A rootless path such as
+  `foo:a/../b` stays rootless (`foo:b`), and a result that would start with
+  an empty segment is written after a `./` segment (`foo:a/../..//b` becomes
+  `foo:.//b`) so it does not read as an absolute path or an authority.
 
 ```swift
 let lhs = try IRI(validating: "example://a/b/c/%7Bfoo%7D/rosé")
@@ -104,6 +107,16 @@ try unicode.normalized(.syntaxAndSchemeBased).rawValue
 try unicode.isEquivalent(to: ace, under: .syntaxAndSchemeBased)
 // true
 ```
+
+Each host label is lowercased and mapped to Unicode Normalization Form KC.
+A label keeps its original characters when the mapping would add a percent
+sign or a label separator, so `www.google⒈com` is not equivalent to
+`www.google1.com` and an ideographic full stop does not split a label. These
+mappings are the spoofing risks RFC 3987 section 8 describes. An ACE label
+longer than 63 octets, the DNS label limit, is never decoded.
+
+Character normalization and the host mapping use Foundation's Unicode
+normalization, because the standard library has no public API for it.
 
 Empty query and fragment delimiters are never removed:
 `http://example.com/?` and `http://example.com/#` stay distinct from

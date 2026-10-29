@@ -1,5 +1,3 @@
-import Foundation
-
 /// Applies RFC 3987 section 5.3 normalization to validated IRI components.
 enum IRINormalizer {
     static func normalizedString(
@@ -40,7 +38,7 @@ enum IRINormalizer {
         }
 
         if normalization.contains(.pathSegments) {
-            path = removingDotSegments(from: path)
+            path = pathRemovingDotSegments(path)
         }
 
         if normalization.contains(.scheme), let rule = IRISchemeNormalizationRule(scheme: scheme) {
@@ -234,11 +232,38 @@ enum IRINormalizer {
         return output
     }
 
+    /// Removes dot segments and keeps the kind of path the input had.
+    ///
+    /// An absolute or empty path goes through RFC 3986 section 5.2.4 as is.
+    /// A rootless path is treated as if it were rooted, then the root is
+    /// taken off again, so the result stays rootless. When the result
+    /// starts with an empty segment it is written after a "./" segment,
+    /// which keeps it from reading as an absolute path and is stable when
+    /// normalized again.
+    static func pathRemovingDotSegments(_ path: String) -> String {
+        guard !path.isEmpty, !path.hasPrefix("/") else {
+            return removingDotSegments(from: path)
+        }
+        var rootless = removingDotSegments(from: "/" + path)
+        if rootless.hasPrefix("/") {
+            rootless.removeFirst()
+        }
+        if rootless.hasPrefix("/") {
+            rootless = "./" + rootless
+        }
+        return rootless
+    }
+
     // MARK: - Character and IDN normalization
 
     private static func nfc(_ string: String) -> String {
-        string.precomposedStringWithCanonicalMapping
+        string.canonicallyComposed
     }
+
+    /// The longest DNS label in octets (RFC 1034 section 3.1). A longer
+    /// label cannot be a valid ACE label, so it is not Punycode-decoded,
+    /// which also bounds the cost of decoding untrusted input.
+    private static let maximumLabelLength = 63
 
     /// Normalizes a DNS host for comparison: Punycode labels are decoded,
     /// and each label is lowercased and mapped to NFKC, which are the case
@@ -257,6 +282,7 @@ enum IRINormalizer {
         // ACE label.
         let encodedPart = String(lowercasedLabel.dropFirst(4))
         if lowercasedLabel.hasPrefix("xn--"),
+            lowercasedLabel.utf8.count <= maximumLabelLength,
             let decoded = Punycode.decode(encodedPart),
             !decoded.unicodeScalars.allSatisfy(\.isASCII),
             Punycode.encode(decoded) == encodedPart,
@@ -265,21 +291,27 @@ enum IRINormalizer {
             unicodeLabel = decoded
         }
 
-        let mapped = unicodeLabel.lowercased().precomposedStringWithCompatibilityMapping
+        let mapped = unicodeLabel.lowercased().compatibilityComposed
         let candidate = isSafeCompatibilityMapping(mapped, of: unicodeLabel) ? mapped : asciiLowercased(unicodeLabel)
         return uppercasingPercentEncodings(candidate)
     }
 
     /// Accepts an NFKC-mapped label only when it is still `ireg-name` text
-    /// and introduces no percent sign. NFKC maps U+FF05 FULLWIDTH PERCENT
-    /// SIGN to `%`, which would either make the host invalid or let a
-    /// literal character read as an encoded octet (RFC 3987 section 8).
+    /// and introduces no percent sign and no label separator.
+    ///
+    /// NFKC maps U+FF05 FULLWIDTH PERCENT SIGN to `%`, which would either
+    /// make the host invalid or let a literal character read as an encoded
+    /// octet. It also maps U+2488 DIGIT ONE FULL STOP to `1.` and U+3002,
+    /// U+FF0E and U+FF61 to `.`, which would split one label into two and
+    /// make distinct hosts compare as equivalent. Both are the spoofing
+    /// risks RFC 3987 section 8 describes, so such a label keeps its
+    /// original characters.
     private static func isSafeCompatibilityMapping(_ mapped: String, of label: String) -> Bool {
         guard isRegisteredNameText(mapped) else {
             return false
         }
-        let percentCount = { (text: String) in text.unicodeScalars.filter { $0 == "%" }.count }
-        guard percentCount(mapped) == percentCount(label) else {
+        let count = { (text: String, scalar: Unicode.Scalar) in text.unicodeScalars.filter { $0 == scalar }.count }
+        guard count(mapped, "%") == count(label, "%"), count(mapped, ".") == count(label, ".") else {
             return false
         }
         let scalars = Array(mapped.unicodeScalars)

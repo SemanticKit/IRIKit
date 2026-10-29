@@ -225,5 +225,40 @@ extension RFC3987ComplianceTests {
             #expect(try normalized.normalized(.syntaxAndSchemeBased) == normalized)
             #expect(try !iri.isEquivalent(to: IRI(validating: "http://aa/"), under: .syntaxAndSchemeBased))
         }
+
+        @Test(
+            "IDN host mapping never splits a label into more labels (RFC 3987 section 8).",
+            .tags(.normalization),
+            arguments: [
+                SimpleComparisonCase(lhs: "http://www.google\u{2488}com/", rhs: "http://www.google1.com/", areEqual: false),
+                SimpleComparisonCase(lhs: "http://www.google\u{2488}com/", rhs: "http://www.google1.com./", areEqual: false),
+                SimpleComparisonCase(lhs: "http://example\u{3002}org/", rhs: "http://example.org/", areEqual: false),
+                SimpleComparisonCase(lhs: "http://example\u{FF0E}org/", rhs: "http://example.org/", areEqual: false),
+                SimpleComparisonCase(lhs: "http://example\u{FF61}org/", rhs: "http://example.org/", areEqual: false),
+                SimpleComparisonCase(lhs: "http://xn--a-ecp.ru/", rhs: "http://a1..ru/", areEqual: false),
+                SimpleComparisonCase(lhs: "http://xn--a-ecp.ru/", rhs: "http://a\u{2488}.ru/", areEqual: true),
+            ]
+        )
+        func compatibilityMappingKeepsLabelBoundaries(_ testCase: SimpleComparisonCase) throws {
+            let lhs = try IRI(validating: testCase.lhs)
+            let rhs = try IRI(validating: testCase.rhs)
+            let normalized = try lhs.normalized(.syntaxAndSchemeBased)
+            let labelCount = { (iri: IRI) in iri.rawValue.split(separator: "/")[1].split(separator: ".", omittingEmptySubsequences: false).count }
+
+            #expect(try lhs.isEquivalent(to: rhs, under: .syntaxAndSchemeBased) == testCase.areEqual)
+            #expect(labelCount(normalized) == labelCount(lhs))
+            #expect(try normalized.normalized(.syntaxAndSchemeBased) == normalized)
+        }
+
+        @Test(
+            "IDN normalization leaves an ACE label longer than a DNS label undecoded.",
+            .tags(.normalization)
+        )
+        func overlongACELabelIsNotDecoded() throws {
+            let label = "xn--" + String(repeating: "a", count: 60) + "-ecp"
+            let iri = try IRI(validating: "http://\(label).example/")
+
+            #expect(try iri.normalized(.syntaxAndSchemeBased).rawValue == "http://\(label).example/")
+        }
     }
 }
