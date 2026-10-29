@@ -40,11 +40,9 @@ enum IRIParser {
             remaining.removeFirst(2)
             let authorityEnd =
                 remaining.firstIndex { $0 == "/" || $0 == "?" || $0 == "#" } ?? remaining.endIndex
-            let authorityValue = String(remaining[..<authorityEnd])
-            guard !authorityValue.isEmpty else {
-                throw IRIError.invalidIRIReference(String(rest))
-            }
-            authority = authorityValue
+            // ireg-name = *( iunreserved / pct-encoded / sub-delims ) may be
+            // empty, as in file:///etc/hosts.
+            authority = String(remaining[..<authorityEnd])
             remaining = remaining[authorityEnd...]
         }
 
