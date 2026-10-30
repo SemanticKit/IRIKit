@@ -60,8 +60,8 @@ extension IRIComponents {
             if let range = components.rangeOfPort {
                 return String(string[range])
             }
-            // Whether `rangeOfPort` is nil or empty for an empty port depends
-            // on the host form: with Swift 6.4 on Linux it is nil for
+            // For an empty port, `rangeOfPort` can be nil or an empty range
+            // depending on the host form, such as nil for
             // "http://example.com:/a" but empty for "http://[::1]:/a". When
             // it is nil, look for ":" right after the host.
             if let host = components.rangeOfHost,
