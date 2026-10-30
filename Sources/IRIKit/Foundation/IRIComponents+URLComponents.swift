@@ -28,7 +28,7 @@ extension IRIComponents {
         let user = components.percentEncodedUser
         let password = components.percentEncodedPassword
         let host = components.percentEncodedHost
-        let port = components.port
+        let port = portText(of: components)
         guard user != nil || password != nil || host != nil || port != nil else {
             return nil
         }
@@ -45,28 +45,34 @@ extension IRIComponents {
         authority += host ?? ""
         if let port {
             authority += ":\(port)"
-        } else if hasEmptyPort(components) {
-            // RFC 3986 section 3.2.3: port = *DIGIT, so "host:" is a valid
-            // authority with an empty port, and `port` is nil for it.
-            authority += ":"
         }
         return authority
     }
 
-    /// Returns whether the components hold a port delimiter with no digits.
-    private static func hasEmptyPort(_ components: URLComponents) -> Bool {
-        if let range = components.rangeOfPort {
-            return range.isEmpty
+    /// Returns the port text as the components hold it, `""` for a port
+    /// delimiter with no digits, or `nil` when there is no port.
+    ///
+    /// RFC 3986 section 3.2.3 defines `port = *DIGIT`, so the text is kept
+    /// verbatim: `components.port` is an `Int`, which drops a port too large
+    /// for `Int` and rewrites `007` as `7`.
+    private static func portText(of components: URLComponents) -> String? {
+        if let string = components.string {
+            if let range = components.rangeOfPort {
+                return String(string[range])
+            }
+            // Whether `rangeOfPort` is nil or empty for an empty port depends
+            // on the host form: with Swift 6.4 on Linux it is nil for
+            // "http://example.com:/a" but empty for "http://[::1]:/a". When
+            // it is nil, look for ":" right after the host.
+            if let host = components.rangeOfHost,
+                host.upperBound < string.endIndex,
+                string[host.upperBound] == ":"
+            {
+                return ""
+            }
         }
-        // Some Foundation versions report no port range for an empty port,
-        // so look for ":" right after the host.
-        guard
-            let string = components.string,
-            let host = components.rangeOfHost,
-            host.upperBound < string.endIndex
-        else {
-            return false
-        }
-        return string[host.upperBound] == ":"
+        // `string` is nil when the components cannot be assembled, such as
+        // an unbracketed IPv6 host; only the numeric port is left then.
+        return components.port.map(String.init)
     }
 }

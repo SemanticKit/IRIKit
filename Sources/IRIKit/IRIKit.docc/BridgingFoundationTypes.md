@@ -109,6 +109,42 @@ IRIComponents(international).authority
 // "r%C3%A4k.example", not "xn--rk-via.example"
 ```
 
+The port is copied as text, because RFC 3986 section 3.2.3 defines it as
+`port = *DIGIT`. Leading zeros and ports too large for `Int` are kept, and a
+port delimiter with no digits is kept as an empty port.
+
+```swift
+IRIComponents(URLComponents(string: "http://example.com:007/a")!).authority
+// "example.com:007", not "example.com:7"
+
+IRIComponents(URLComponents(string: "http://example.com:/a")!).authority
+// "example.com:"
+```
+
+An IPv6 address needs its brackets. A host set to `"::1"` through
+`components.host` is not an IP literal: `URLComponents.string` is `nil` for
+it, but its percent-encoded form `%3A%3A1` is a valid RFC 3986 `reg-name`, so
+``IRI/init(_:)-(URLComponents)`` accepts it as a registered name.
+
+```swift
+var unbracketed = URLComponents()
+unbracketed.scheme = "http"
+unbracketed.host = "::1"
+unbracketed.path = "/"
+
+unbracketed.string
+// nil
+
+try IRI(unbracketed).rawValue
+// "http://%3A%3A1/", a reg-name host, not the IPv6 loopback address
+
+var bracketed = unbracketed
+bracketed.host = "[::1]"
+
+try IRI(bracketed).rawValue
+// "http://[::1]/"
+```
+
 ## Keep the Boundary Explicit
 
 Use IRIKit values for standards-backed IRI identity in your own APIs. Bridge to
