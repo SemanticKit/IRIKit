@@ -92,8 +92,16 @@ print(queryIRI.rawValue)
 // https://example.com/people/renée?view=summary&draft
 ```
 
+Query items are joined as written, without percent-encoding. A "#" in a query
+name or value would start the fragment, so write it as `%23`:
+`IRIQueryItem(name: "tag", value: "%23swift")`.
+
 The assembled value is available as ``IRIComponents/string`` and is validated
-when you create an ``IRI`` from the components.
+when you create an ``IRI`` from the components. ``IRI/init(components:)`` also
+parses the assembled string back and throws ``IRIError/invalidIRI(_:)`` when the
+components do not read back unchanged. For example, a path that holds "?", a
+query that holds "#", or an authority with a path that does not begin with "/"
+is rejected instead of being silently moved into another component.
 
 ```swift
 components.string
