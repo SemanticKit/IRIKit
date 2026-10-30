@@ -41,14 +41,39 @@ public struct IRI: ExpressibleByStringLiteral, LosslessStringConvertible, RawRep
     /// - Parameter components: Component values that assemble into an absolute
     ///   RFC 3987 IRI.
     /// - Throws: `IRIError.invalidIRI` when the assembled character sequence
-    ///   is not an absolute IRI.
+    ///   is not an absolute IRI, or when it parses back into components that
+    ///   differ from `components`.
     public init(components: IRIComponents) throws {
-        // Without an authority, a path cannot begin with "//": the assembled
-        // string would read the path's first segment as an empty authority.
-        if components.authority == nil, components.path.unicodeScalars.starts(with: "//".unicodeScalars) {
+        let iri = try IRI(validating: components.string)
+        // The assembled string must parse back into the same components.
+        // RFC 3986 section 3.3: with an authority, the path is empty or
+        // begins with "/", so authority "h" and path "a" would read back as
+        // authority "ha". Without an authority, a path cannot begin with
+        // "//", which would read back as an authority. A path holding "?" or
+        // "#", or a query holding "#", would move text into a later component.
+        // Components compare by Unicode scalars, matching IRI identity, so
+        // canonically equivalent but different scalar sequences do not match.
+        guard
+            Self.sameScalars(iri.scheme, components.scheme),
+            Self.sameScalars(iri.authority, components.authority),
+            Self.sameScalars(iri.path, components.path),
+            Self.sameScalars(iri.query, components.query),
+            Self.sameScalars(iri.fragment, components.fragment)
+        else {
             throw IRIError.invalidIRI(components.string)
         }
-        try self.init(validating: components.string)
+        self = iri
+    }
+
+    private static func sameScalars(_ lhs: String?, _ rhs: String?) -> Bool {
+        switch (lhs, rhs) {
+        case (nil, nil):
+            return true
+        case let (lhs?, rhs?):
+            return lhs.unicodeScalars.elementsEqual(rhs.unicodeScalars)
+        default:
+            return false
+        }
     }
 
     /// Creates an absolute IRI from a raw value.
