@@ -99,9 +99,11 @@ name or value would start the fragment, so write it as `%23`:
 The assembled value is available as ``IRIComponents/string`` and is validated
 when you create an ``IRI`` from the components. ``IRI/init(components:)`` also
 parses the assembled string back and throws ``IRIError/invalidIRI(_:)`` when the
-components do not read back unchanged. For example, a path that holds "?", a
-query that holds "#", or an authority with a path that does not begin with "/"
-is rejected instead of being silently moved into another component.
+components do not read back unchanged. The comparison is by Unicode scalars,
+as ``IRI`` equality is, so a canonically equivalent but different spelling does
+not count as unchanged. For example, a path that holds "?", a query that holds
+"#", or an authority with a path that does not begin with "/" is rejected
+instead of being silently moved into another component.
 
 ```swift
 components.string

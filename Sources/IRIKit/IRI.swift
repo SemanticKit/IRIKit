@@ -51,29 +51,20 @@ public struct IRI: ExpressibleByStringLiteral, LosslessStringConvertible, RawRep
         // authority "ha". Without an authority, a path cannot begin with
         // "//", which would read back as an authority. A path holding "?" or
         // "#", or a query holding "#", would move text into a later component.
-        // Components compare by Unicode scalars, matching IRI identity, so
-        // canonically equivalent but different scalar sequences do not match.
-        guard
-            Self.sameScalars(iri.scheme, components.scheme),
-            Self.sameScalars(iri.authority, components.authority),
-            Self.sameScalars(iri.path, components.path),
-            Self.sameScalars(iri.query, components.query),
-            Self.sameScalars(iri.fragment, components.fragment)
-        else {
+        // `IRIComponents ==` compares Unicode scalars, matching IRI identity,
+        // so canonically equivalent but different scalar sequences do not
+        // match.
+        let parsed = IRIComponents(
+            scheme: iri.scheme,
+            authority: iri.authority,
+            path: iri.path,
+            query: iri.query,
+            fragment: iri.fragment
+        )
+        guard parsed == components else {
             throw IRIError.invalidIRI(components.string)
         }
         self = iri
-    }
-
-    private static func sameScalars(_ lhs: String?, _ rhs: String?) -> Bool {
-        switch (lhs, rhs) {
-        case (nil, nil):
-            return true
-        case let (lhs?, rhs?):
-            return lhs.unicodeScalars.elementsEqual(rhs.unicodeScalars)
-        default:
-            return false
-        }
     }
 
     /// Creates an absolute IRI from a raw value.

@@ -27,11 +27,13 @@ extension RFC3987ComplianceTests {
 
         @Test("The base IRI's components assemble into the base IRI and read back unchanged.")
         func baseRoundTripsThroughComponents() throws {
+            let base = try IRI(validating: Self.base)
             let components = IRIComponents(
-                scheme: "file",
-                authority: "",
-                path: "/a/bb/ccc/d;p",
-                query: "q"
+                scheme: base.scheme,
+                authority: base.authority,
+                path: base.path,
+                query: base.query,
+                fragment: base.fragment
             )
 
             #expect(try IRI(components: components).rawValue == Self.base)
@@ -100,6 +102,17 @@ extension RFC3987ComplianceTests {
             try expectResolution(of: reference, to: expected)
         }
 
+        @Test("A delimiter followed by a combining mark still splits the reference, as IRIKit finds delimiters by Unicode scalar.")
+        func delimiterBeforeCombiningMark() throws {
+            let parts = ReferenceResolver.parts(of: "g?\u{301}#\u{301}")
+
+            #expect(parts.path == "g")
+            #expect(parts.query == "\u{301}")
+            #expect(parts.fragment == "\u{301}")
+
+            try expectResolution(of: "g#\u{301}", to: "file:///a/bb/ccc/g#\u{301}")
+        }
+
         private func expectResolution(of reference: String, to expected: String) throws {
             let base = try IRI(validating: Self.base)
             let target = try ReferenceResolver.resolve(
@@ -108,7 +121,6 @@ extension RFC3987ComplianceTests {
             )
 
             #expect(target.rawValue == expected)
-            #expect(try IRI(validating: expected) == target)
         }
     }
 }

@@ -15,4 +15,61 @@ struct URLComponentsIRIComponentsInitializerTests {
         #expect(components.query == "view=summary")
         #expect(components.fragment == "details")
     }
+
+    @Test(
+        "authority = [ userinfo '@' ] host [ ':' port ] keeps userinfo, port, IPv6 literals and an empty host.",
+        arguments: [
+            ("https://user@example.com/a", "user@example.com"),
+            ("https://user:secret@example.com/a", "user:secret@example.com"),
+            ("https://us%20er@example.com/a", "us%20er@example.com"),
+            ("https://example.com:8080/a", "example.com:8080"),
+            ("https://user:secret@example.com:8080/a", "user:secret@example.com:8080"),
+            ("http://[::1]:8080/a", "[::1]:8080"),
+            ("http://[2001:db8::7]/a", "[2001:db8::7]"),
+            ("file:///etc/hosts", ""),
+            ("http://:80/a", ":80"),
+            ("http://example.com:/a", "example.com:"),
+            ("http://[::1]:/a", "[::1]:"),
+        ]
+    )
+    func assemblesAuthority(_ string: String, _ authority: String) {
+        let components = IRIComponents(URLComponents(string: string)!)
+
+        #expect(components.authority == authority)
+    }
+
+    @Test(
+        "port = *DIGIT is kept verbatim, including leading zeros and digits too many for Int.",
+        arguments: [
+            ("http://h:007/a", "h:007"),
+            ("http://h:99999999999999999999/a", "h:99999999999999999999"),
+            ("http://user@h:007/a", "user@h:007"),
+        ]
+    )
+    func keepsPortText(_ string: String, _ authority: String) {
+        let urlComponents = URLComponents(string: string)!
+        let components = IRIComponents(urlComponents)
+
+        #expect(components.authority == authority)
+        #expect(components.string == string)
+    }
+
+    @Test("A port set through URLComponents.port is written in decimal.")
+    func writesNumericPort() {
+        var urlComponents = URLComponents()
+        urlComponents.scheme = "http"
+        urlComponents.host = "h"
+        urlComponents.port = 8080
+        urlComponents.path = "/a"
+
+        #expect(IRIComponents(urlComponents).authority == "h:8080")
+    }
+
+    @Test("URLComponents without user, password, host or port should give no authority.")
+    func omitsAbsentAuthority() {
+        let components = IRIComponents(URLComponents(string: "urn:example:a")!)
+
+        #expect(components.authority == nil)
+        #expect(components.path == "example:a")
+    }
 }

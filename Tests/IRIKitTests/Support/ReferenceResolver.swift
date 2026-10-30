@@ -12,6 +12,10 @@
 enum ReferenceResolver {
     /// The five components of a reference, split by the regular expression
     /// of RFC 3986 appendix B. A component that is absent is `nil`.
+    ///
+    /// Delimiters are found by Unicode scalar, as IRIKit's parser finds
+    /// them, not by `Character`: a delimiter followed by a combining mark,
+    /// such as "#" and U+0301, is one `Character` that is not "#".
     struct Parts {
         var scheme: String?
         var authority: String?
@@ -21,34 +25,38 @@ enum ReferenceResolver {
     }
 
     static func parts(of reference: String) -> Parts {
-        var rest = Substring(reference)
+        var rest = reference.unicodeScalars[...]
         var parts = Parts(path: "")
         // ^(([^:/?#]+):)?
-        if let colon = rest.firstIndex(where: { ":/?#".contains($0) }),
+        if let colon = rest.firstIndex(where: { ":/?#".unicodeScalars.contains($0) }),
             rest[colon] == ":", colon != rest.startIndex
         {
-            parts.scheme = String(rest[..<colon])
+            parts.scheme = text(rest[..<colon])
             rest = rest[rest.index(after: colon)...]
         }
         // (//([^/?#]*))?
-        if rest.hasPrefix("//") {
+        if rest.starts(with: "//".unicodeScalars) {
             rest = rest.dropFirst(2)
-            let end = rest.firstIndex(where: { "/?#".contains($0) }) ?? rest.endIndex
-            parts.authority = String(rest[..<end])
+            let end = rest.firstIndex(where: { "/?#".unicodeScalars.contains($0) }) ?? rest.endIndex
+            parts.authority = text(rest[..<end])
             rest = rest[end...]
         }
         // (#(.*))?
         if let hash = rest.firstIndex(of: "#") {
-            parts.fragment = String(rest[rest.index(after: hash)...])
+            parts.fragment = text(rest[rest.index(after: hash)...])
             rest = rest[..<hash]
         }
         // (\?([^#]*))?
         if let question = rest.firstIndex(of: "?") {
-            parts.query = String(rest[rest.index(after: question)...])
+            parts.query = text(rest[rest.index(after: question)...])
             rest = rest[..<question]
         }
-        parts.path = String(rest)
+        parts.path = text(rest)
         return parts
+    }
+
+    private static func text(_ scalars: Substring.UnicodeScalarView) -> String {
+        String(Substring(scalars))
     }
 
     /// Resolves `reference` against `base` with the strict parser of

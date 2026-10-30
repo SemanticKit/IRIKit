@@ -34,4 +34,25 @@ struct IRIComponentsTests {
             try IRI(components: components)
         }
     }
+
+    @Test("IRI(components:) reads components back by Unicode scalars, so components that differ from the parsed IRI only by precomposed and decomposed 'é' do not match.")
+    func roundTripComparesUnicodeScalars() throws {
+        let decomposed = IRIComponents(scheme: "https", authority: "example.com", path: "/rene\u{301}e")
+        let precomposed = IRIComponents(scheme: "https", authority: "example.com", path: "/ren\u{E9}e")
+
+        let iri = try IRI(components: decomposed)
+        // The components that the round-trip check compares against.
+        let parsed = IRIComponents(
+            scheme: iri.scheme,
+            authority: iri.authority,
+            path: iri.path,
+            query: iri.query,
+            fragment: iri.fragment
+        )
+
+        #expect(parsed == decomposed)
+        #expect(parsed != precomposed)
+        #expect(parsed.string == precomposed.string)
+        #expect(try IRI(components: precomposed) != iri)
+    }
 }
