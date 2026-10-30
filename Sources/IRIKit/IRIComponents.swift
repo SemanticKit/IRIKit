@@ -99,22 +99,27 @@ extension IRIComponents: Equatable {
     /// matching IRI equality, so canonically equivalent but different scalar
     /// sequences are not equal.
     public static func == (lhs: IRIComponents, rhs: IRIComponents) -> Bool {
-        sameScalars(lhs.scheme, rhs.scheme)
-            && sameScalars(lhs.authority, rhs.authority)
-            && sameScalars(lhs.path, rhs.path)
-            && sameScalars(lhs.query, rhs.query)
-            && sameScalars(lhs.fragment, rhs.fragment)
+        sameUnicodeScalars(lhs.scheme, rhs.scheme)
+            && sameUnicodeScalars(lhs.authority, rhs.authority)
+            && sameUnicodeScalars(lhs.path, rhs.path)
+            && sameUnicodeScalars(lhs.query, rhs.query)
+            && sameUnicodeScalars(lhs.fragment, rhs.fragment)
     }
+}
 
-    private static func sameScalars(_ lhs: String?, _ rhs: String?) -> Bool {
-        switch (lhs, rhs) {
-        case (nil, nil):
-            return true
-        case let (lhs?, rhs?):
-            return lhs.unicodeScalars.elementsEqual(rhs.unicodeScalars)
-        default:
-            return false
-        }
+/// Returns whether two optional components are both absent or hold the same
+/// Unicode scalar sequence.
+///
+/// Swift `String` equality treats canonically equivalent text as equal, so
+/// component comparisons that must match IRI identity compare scalars.
+func sameUnicodeScalars(_ lhs: String?, _ rhs: String?) -> Bool {
+    switch (lhs, rhs) {
+    case (nil, nil):
+        true
+    case let (lhs?, rhs?):
+        lhs.unicodeScalars.elementsEqual(rhs.unicodeScalars)
+    default:
+        false
     }
 }
 

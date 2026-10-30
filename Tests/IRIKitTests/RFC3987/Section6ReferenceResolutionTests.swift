@@ -120,7 +120,9 @@ extension RFC3987ComplianceTests {
                 against: base
             )
 
-            #expect(target.rawValue == expected)
+            // Compare scalars: `String ==` treats canonically equivalent text
+            // as equal.
+            #expect(target.rawValue.unicodeScalars.elementsEqual(expected.unicodeScalars))
         }
     }
 }

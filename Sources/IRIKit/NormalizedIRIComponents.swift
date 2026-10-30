@@ -22,21 +22,11 @@ struct NormalizedIRIComponents: Equatable, Sendable {
     /// even when it was not requested. RFC 3987 section 5.3.1 compares
     /// character by character, so the scalars are compared.
     static func == (lhs: Self, rhs: Self) -> Bool {
-        func same(_ lhs: String?, _ rhs: String?) -> Bool {
-            switch (lhs, rhs) {
-            case (nil, nil):
-                true
-            case let (lhs?, rhs?):
-                lhs.unicodeScalars.elementsEqual(rhs.unicodeScalars)
-            default:
-                false
-            }
-        }
-        return same(lhs.scheme, rhs.scheme)
-            && same(lhs.authority, rhs.authority)
-            && same(lhs.path, rhs.path)
-            && same(lhs.query, rhs.query)
-            && same(lhs.fragment, rhs.fragment)
+        sameUnicodeScalars(lhs.scheme, rhs.scheme)
+            && sameUnicodeScalars(lhs.authority, rhs.authority)
+            && sameUnicodeScalars(lhs.path, rhs.path)
+            && sameUnicodeScalars(lhs.query, rhs.query)
+            && sameUnicodeScalars(lhs.fragment, rhs.fragment)
     }
 
     /// The IRI text recomposed as in RFC 3986 section 5.3, or `nil` when
