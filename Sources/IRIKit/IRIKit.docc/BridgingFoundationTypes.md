@@ -95,6 +95,20 @@ iriComponents.string
 // "https://example.com/people/ren%C3%A9e?view=summary"
 ```
 
+The authority keeps the user, password and port, as RFC 3986 section 3.2
+defines it: `[ userinfo "@" ] host [ ":" port ]`. The host comes from
+`percentEncodedHost`, so a host set through `components.host` comes out
+percent-encoded, not in Foundation's IDNA form.
+
+```swift
+var international = URLComponents()
+international.scheme = "https"
+international.host = "räk.example"
+
+IRIComponents(international).authority
+// "r%C3%A4k.example", not "xn--rk-via.example"
+```
+
 ## Keep the Boundary Explicit
 
 Use IRIKit values for standards-backed IRI identity in your own APIs. Bridge to

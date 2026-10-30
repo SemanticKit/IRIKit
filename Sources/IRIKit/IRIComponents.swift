@@ -94,8 +94,52 @@ public struct IRIComponents {
 
 extension IRIComponents: Codable {}
 
-extension IRIComponents: Equatable {}
+extension IRIComponents: Equatable {
+    /// Returns whether each component holds the same Unicode scalar sequence,
+    /// matching IRI equality, so canonically equivalent but different scalar
+    /// sequences are not equal.
+    public static func == (lhs: IRIComponents, rhs: IRIComponents) -> Bool {
+        sameScalars(lhs.scheme, rhs.scheme)
+            && sameScalars(lhs.authority, rhs.authority)
+            && sameScalars(lhs.path, rhs.path)
+            && sameScalars(lhs.query, rhs.query)
+            && sameScalars(lhs.fragment, rhs.fragment)
+    }
 
-extension IRIComponents: Hashable {}
+    private static func sameScalars(_ lhs: String?, _ rhs: String?) -> Bool {
+        switch (lhs, rhs) {
+        case (nil, nil):
+            return true
+        case let (lhs?, rhs?):
+            return lhs.unicodeScalars.elementsEqual(rhs.unicodeScalars)
+        default:
+            return false
+        }
+    }
+}
+
+extension IRIComponents: Hashable {
+    /// Hashes the Unicode scalar sequence of each component.
+    public func hash(into hasher: inout Hasher) {
+        Self.combine(scheme, into: &hasher)
+        Self.combine(authority, into: &hasher)
+        Self.combine(path, into: &hasher)
+        Self.combine(query, into: &hasher)
+        Self.combine(fragment, into: &hasher)
+    }
+
+    private static func combine(_ component: String?, into hasher: inout Hasher) {
+        guard let component else {
+            hasher.combine(false)
+            return
+        }
+        hasher.combine(true)
+        // A count before the scalars keeps adjacent components apart.
+        hasher.combine(component.unicodeScalars.count)
+        for scalar in component.unicodeScalars {
+            hasher.combine(scalar.value)
+        }
+    }
+}
 
 extension IRIComponents: Sendable {}

@@ -19,6 +19,7 @@ struct URLComponentsIRIInitializerTests {
             ("https://example.com:8080/a", "example.com:8080"),
             ("http://[::1]:8080/a", "[::1]:8080"),
             ("file:///etc/hosts", ""),
+            ("http://example.com:/a", "example.com:"),
         ]
     )
     func keepsAuthority(_ string: String, _ authority: String) throws {
@@ -39,11 +40,41 @@ struct URLComponentsIRIInitializerTests {
         }
     }
 
+    @Test("URLComponents whose authority and path would read back differently should not initialize an IRI.")
+    func rejectsComponentsThatDoNotRoundTrip() {
+        var hostAndRootlessPath = URLComponents()
+        hostAndRootlessPath.scheme = "https"
+        hostAndRootlessPath.host = "example.com"
+        hostAndRootlessPath.percentEncodedPath = "a"
+
+        #expect(throws: IRIError.invalidIRI("https://example.coma")) {
+            try IRI(hostAndRootlessPath)
+        }
+
+        var userAndRootlessPath = URLComponents()
+        userAndRootlessPath.scheme = "urn"
+        userAndRootlessPath.user = "u"
+        userAndRootlessPath.percentEncodedPath = "x"
+
+        #expect(throws: IRIError.invalidIRI("urn://u@x")) {
+            try IRI(userAndRootlessPath)
+        }
+    }
+
     @Test("URLComponents without a scheme should not initialize an IRI.")
     func rejectsMissingScheme() {
         let components = URLComponents(string: "//example.com/a")!
 
-        #expect(throws: IRIError.self) {
+        #expect(throws: IRIError.invalidIRI("://example.com/a")) {
+            try IRI(components)
+        }
+    }
+
+    @Test("An IPv6 zone ID host should not initialize an IRI: RFC 3986 IP-literal has no zone ID, which RFC 6874 adds.")
+    func rejectsZoneIdentifier() {
+        let components = URLComponents(string: "http://[fe80::1%25en0]/")!
+
+        #expect(throws: IRIError.invalidIRI("http://[fe80::1%25en0]/")) {
             try IRI(components)
         }
     }

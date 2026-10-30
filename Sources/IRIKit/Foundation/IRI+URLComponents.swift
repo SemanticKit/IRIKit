@@ -3,7 +3,7 @@ import Foundation
 extension IRI {
     /// Creates an IRI from Foundation URL components.
     ///
-    /// The components are mirrored with ``IRIComponents/init(_:)`` and
+    /// The components are mirrored with ``IRIComponents/init(_:)-(URLComponents)`` and
     /// assembled with ``IRI/init(components:)``, so the IRI is checked the same
     /// way as one built from ``IRIComponents``.
     ///

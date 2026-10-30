@@ -28,6 +28,7 @@ struct URLComponentsIRIComponentsInitializerTests {
             ("http://[2001:db8::7]/a", "[2001:db8::7]"),
             ("file:///etc/hosts", ""),
             ("http://:80/a", ":80"),
+            ("http://example.com:/a", "example.com:"),
         ]
     )
     func assemblesAuthority(_ string: String, _ authority: String) {
